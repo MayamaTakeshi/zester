@@ -150,20 +150,20 @@ function peg$parse(input, options) {
       peg$c6 = peg$literalExpectation("}", false),
       peg$c7 = function(vn, optional) { 
       		var data = {op: 'collect', name: vn}
-          	if(optional) {
-      	    	data.type = optional[2]
-          	}
-          	return data
+      		if(optional) {
+      			data.type = optional[2]
+      		}
+      		return data
       	},
       peg$c8 = function(vn, t, l) { 
-          	return {
-      			op: 'collect',
-      			name: vn,
-      			type: t,
-      			length: l
-          	}
+      		return {
+      		op: 'collect',
+      		name: vn,
+      		type: t,
+      		length: l
+      		}
       	},
-      peg$c9 = function(os) { return [{op: 'consume', str: os}] },
+      peg$c9 = function(strs) { return {op: 'consume', str: flattenStr(strs)} },
       peg$c10 = "!!",
       peg$c11 = peg$literalExpectation("!!", false),
       peg$c12 = function() { return "!" },
@@ -422,9 +422,6 @@ function peg$parse(input, options) {
         }
         if (s4 === peg$FAILED) {
           s4 = peg$parseintercalator();
-          if (s4 === peg$FAILED) {
-            s4 = peg$parseordinaryString();
-          }
         }
         if (s4 !== peg$FAILED) {
           while (s4 !== peg$FAILED) {
@@ -446,9 +443,6 @@ function peg$parse(input, options) {
             }
             if (s4 === peg$FAILED) {
               s4 = peg$parseintercalator();
-              if (s4 === peg$FAILED) {
-                s4 = peg$parseordinaryString();
-              }
             }
           }
         } else {
@@ -762,23 +756,34 @@ function peg$parse(input, options) {
   }
 
   function peg$parseordinaryString() {
-    var s0, s1;
+    var s0, s1, s2;
 
     s0 = peg$currPos;
-    s1 = peg$parseescapedBang();
+    s1 = [];
+    s2 = peg$parseordinaryStr();
+    if (s2 !== peg$FAILED) {
+      while (s2 !== peg$FAILED) {
+        s1.push(s2);
+        s2 = peg$parseordinaryStr();
+      }
+    } else {
+      s1 = peg$FAILED;
+    }
     if (s1 !== peg$FAILED) {
       peg$savedPos = s0;
       s1 = peg$c9(s1);
     }
     s0 = s1;
+
+    return s0;
+  }
+
+  function peg$parseordinaryStr() {
+    var s0;
+
+    s0 = peg$parseescapedBang();
     if (s0 === peg$FAILED) {
-      s0 = peg$currPos;
-      s1 = peg$parsestring();
-      if (s1 !== peg$FAILED) {
-        peg$savedPos = s0;
-        s1 = peg$c9(s1);
-      }
-      s0 = s1;
+      s0 = peg$parsestring();
     }
 
     return s0;
@@ -1099,20 +1104,20 @@ function peg$parse(input, options) {
 
 
   	function flattenArr(a, r){
-      if(!r){ r = []}
-      for(var i=0; i<a.length; i++){
-          if(a[i].constructor == Array){
-              r.concat(flattenArr(a[i], r));
-          }else{
-              r.push(a[i]);
-          }
-      }
-      return r;
+  		if(!r){ r = []}
+  		for(var i=0; i<a.length; i++){
+  			if(a[i].constructor == Array){
+  				r.concat(flattenArr(a[i], r));
+  			}else{
+  				r.push(a[i]);
+  			}
+  		}
+  		return r;
   	}
-      
-      function flattenStr(s) {
-      	return [].concat.apply([], s).join("")
-      }
+  		
+  	function flattenStr(s) {
+  		return [].concat.apply([], s).join("")
+  	}
 
 
   peg$result = peg$startRuleFunction();

@@ -19,7 +19,7 @@
 
 main
 	= arr:(intercalator? (collectTil ordinaryString)* collectTil) { return flattenArr(arr) }
-	/ arr:(intercalator? (collectTil ordinaryString / intercalator / ordinaryString)+) { return flattenArr(arr) }
+	/ arr:(intercalator? (collectTil ordinaryString / intercalator)+) { return flattenArr(arr) }
 	/ arr:intercalator+ { return flattenArr(arr) }
 		
 collectTil
@@ -45,9 +45,11 @@ intercalator
 	= collect
 	/ ordinaryString
 
-ordinaryString
-	= os:escapedBang { return [{op: 'consume', str: os}] }
-	/ os:string { return [{op: 'consume', str: os}] }
+ordinaryString = strs:ordinaryStr+ { return {op: 'consume', str: flattenStr(strs)} }
+
+ordinaryStr
+	= escapedBang 
+	/ string 
 		
 escapedBang = "!!" { return "!" }
 
