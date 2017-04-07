@@ -1,0 +1,23 @@
+{
+  "name": "zester",
+  "version": "1.0.0",
+  "description": "Functional testing tool",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MayamaTakeshi/zester.git"
+  },
+  "author": "MayamaTakeshi <mayamatakeshi@gmail.com>",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/MayamaTakeshi/zester/issues"
+  },
+  "homepage": "https://github.com/MayamaTakeshi/zester#readme",
+  "devDependencies": {
+    "jest": "^19.0.2",
+    "pegjs": "^0.10.0"
+  }
+}
