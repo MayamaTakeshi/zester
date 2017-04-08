@@ -15,3 +15,10 @@ var _nonBlankStr = (x) => {
 	return x != "" 
 }
 
+var isDict = (v) => {
+    typeof v==='object' && v!==null && !(v instanceof Array) && !(v instanceof Date)
+}
+
+var match = (expected, received, dict, strict) => {
+	
+}

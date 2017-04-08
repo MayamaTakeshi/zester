@@ -21,7 +21,7 @@ test('process valid match string', () => {
 
 })
 
-test('unclosed ${}', () => {
+test('unclosed !{}', () => {
 	expect( () => { sm.parse('abc!{') } ).toThrow()
 })
 
@@ -30,3 +30,11 @@ test('bang', () => {
 		{ op: 'consume', str: 'abc!def' },
 	])
 })
+
+test('non collection', () => {
+	expect(sm.parse('@!!{aaa')).toEqual([
+		{ op: 'consume', str: '@!{aaa' },
+	])
+})
+
+

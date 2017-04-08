@@ -16,13 +16,13 @@ z.exec('one', () => {
 
 z.exec('two', () => {
 	setTimeout(() => {
-		em.emit("something_happened")
+		em.emit("something_happened", 'arg1', 'arg2', 'arg3', 4, true, new Date)
 	}, 2000)
 })
 
 z.exec('three', () => {
 	setTimeout(() => {
-		em.emit("something_happened2")
+		em.emit("something_happened2", {a: 1, b: 2})
 	}, 2100)
 })
 
