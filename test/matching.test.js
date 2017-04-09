@@ -33,7 +33,7 @@ test("partial_match: no array match", () => {
 	var received = [1,2,3,4,[5,6,77]];
 
 	var dict = {}
-	expect( () => m.partial_match(expected)(received, dict) ).toThrow(/Elements don't match/)
+	expect( () => m.partial_match(expected)(received, dict) ).toThrow(/Elements .+ don't match/)
 })
 
 
