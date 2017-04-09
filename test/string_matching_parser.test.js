@@ -1,9 +1,9 @@
-const sm = require('../src/string_matching');
+const smp = require('../src/string_matching_parser');
 
 test('process valid match string', () => {
 	var proto = 'sip'
 
-	var res = sm.parse(`"jim" <${proto}:!{user}@!{ip}:!{port};tag=!{tag:str:26};phone=!{phone:str:9}>`)
+	var res = smp.parse(`"jim" <${proto}:!{user}@!{ip}:!{port};tag=!{tag:str:26};phone=!{phone:str:9}>`)
 
 	expect(res).toEqual([
 		{ op: 'consume', str: '"jim" <sip:' },
@@ -22,17 +22,17 @@ test('process valid match string', () => {
 })
 
 test('unclosed !{}', () => {
-	expect( () => { sm.parse('abc!{') } ).toThrow()
+	expect( () => { smp.parse('abc!{') } ).toThrow()
 })
 
 test('bang', () => {
-	expect(sm.parse('abc!!def')).toEqual([
+	expect(smp.parse('abc!!def')).toEqual([
 		{ op: 'consume', str: 'abc!def' },
 	])
 })
 
 test('non collection', () => {
-	expect(sm.parse('@!!{aaa')).toEqual([
+	expect(smp.parse('@!!{aaa')).toEqual([
 		{ op: 'consume', str: '@!{aaa' },
 	])
 })

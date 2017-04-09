@@ -1,2 +1,2 @@
 To build string_matching.js run:
-   ../node_modules/pegjs/bin/pegjs string_matching.pegjs
+   ../node_modules/pegjs/bin/pegjs string_matching_parser.pegjs

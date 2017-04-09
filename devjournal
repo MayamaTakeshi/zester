@@ -9,37 +9,26 @@ Instead, we will establish that to escape the string collection syntax, we must 
 Here is how matching would be used:
 
 zester.wait([
-	{
-		source: "some_event_source",
-		name: "some_event_name",
-		data: m.m({
-			a: 1,
+  {
+    source: "sip",
+    name: "incoming",
+    data1: {
+      a: m.m({
+        A: 1,
+        B: 2,
+        D: 4,
+      }), // partial match (element 'C' is ignored)
 			b: 2,
-			d: 4,
-			data1: {
-				aa: 11,
-				bb: 22,
-				cc: 33,
-				dd: 44,
-				ee: m.p({
-					A: 1,
-					B: 2,
-					D: 4,
-				}), // partial match
-			}, // full match
-			data2: m.m({
-				aaa: 111,
-				bbb: 222,
-				ddd: 444,
-				eee: {
-					AA: 11,
-					BB: 22,
-					CC: 33,
-					DD: 44,
-				}, // full match	
-			}), // partial match
-		})
-	}
+    }, // full match
+    data2: m.m({
+      aa: {
+        AA: 1,
+        BB: 2,
+        CC: 3,
+        DD: 4,
+      }, // full match 
+    }), // partial match (element 'bb' is ignored)
+  }
 ], 1000)
 
 In the above, m.m (matching.match) is a function that returns a fun(expected, received) that checks only for the specified data (partial matching). To do a full matching attempt, passing just a dict is enough (and both full and partial matchers can recursively use full and partial matching).
@@ -90,5 +79,67 @@ and even provide it as a helper function in our module:
 			])
 
 This is a small cost to pay as most of the time we will not have to deal with undefined as element in arrays or dicts (it will be supported in case of keys too).
+
+================================================
+2017/04/09 takeshi:
+We should also be able specify value collection and variable assignment.
+
+Here is a typical http server code:
+
+var http = require('http');
+var index = fs.readFileSync('index.html');
+
+http.createServer(function (req, res) {
+  res.writeHead(200)
+  res.end()
+}).listen(8000)
+
+
+The equivalent code using zester would be:
+
+var http = require('http');
+
+http.createServer(m.event_catcher('http', 'request')).listen(8000);
+
+zester.wait([
+	{
+		source: 'http',
+		name: 'request',
+		args: [m.collect('req'), m.collect('res')],
+	}
+], 1000)
+
+zester.exec('process http request', () => {
+	res.writeHead(200)
+	res.end(200)
+})
+			
+In the above, m.event_catcher is used to catch events that happen in the http server and enqueue them for later processing.
+Then in the zester.wait we collect and assign the variables req and res to permit later processing with zester.exec.
+
+================================================
+2017/04/09 takeshi:
+We should also be able specify value collection and variable assignment.
+
+Thinking again, zest.wait itself implies matches:
+
+zester.wait([
+	{
+		source: 'XXX'
+		name: 'YYY',
+		data: 'ZZZ',
+	},
+], 1000)
+
+So, we will always to partial match for both dicts and arrays.
+Then if some use needs full match, we can define a function full match that would required an exact match:
+	m.full(expected)
+
+================================================
+2017/04/09 takeshi:
+We must also ensure that any access to non existent keys in our modules throw an error. Otherwise, we will fail in case of typos. Ex:
+  key: m.absente
+instead of:
+  key: m.absent
 
 
