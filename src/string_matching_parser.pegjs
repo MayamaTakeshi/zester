@@ -61,8 +61,12 @@ length
 	= s:([1-9][0-9]*) { return parseInt(flattenStr(s)) }
 		
 type
-	= "num"
-	/ "str"
+	= "str"
+	/ "num"
+	/ "dec"
+	/ "hex"
+	/ "bin"
+	/ "oct"
 		
 elementSpec = s:[^:}]+ { return flattenStr(s) }
 
