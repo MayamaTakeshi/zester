@@ -22,7 +22,23 @@ z.exec('two', () => {
 
 z.exec('three', () => {
 	setTimeout(() => {
-		em.emit("evt2", {a: 1, b: 2})
+		em.emit(
+			"evt2",
+			{
+				a: 1,
+				b: 2,
+				c: {
+					AA: 1,
+					BB: 2,
+					CC: 3,
+					DD: {
+						AAA: 10,
+						BBB: 20,
+					},
+				},
+				d: [11,22,33],
+			}
+		)
 	}, 2100)
 })
 
@@ -45,10 +61,22 @@ z.wait('some_event', [
 	{
 		source: 'my_emitter',
 		name: 'evt2',
-	},
-	{
-		source: 'bla',
-		name: 'x',
+		args: [
+			{
+				a: 1,
+				b: 2,
+				c: {
+					AA: 1,
+					BB: 2,
+					CC: 3,
+					DD: {
+						AAA: 10,
+						BBB: 20,
+					},
+				},
+				d: [11,22,33],
+			},
+		],
 	},
 ], 2000)
 

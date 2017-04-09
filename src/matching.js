@@ -124,16 +124,22 @@ var _matchify_strings = (evt) => {
 
 var partial_match = (expected) => {
 	var expected2 = _matchify_strings(expected)
-	return (received, dict) => {
+	var f =  (received, dict) => {
 		return _match(expected2, received, dict, false)
 	}
+	f.__original_data__ = expected
+	f.__name__ = 'partial_match'
+	return f
 }
 
 var full_match = (expected) => {
 	var expected2 = _matchify_strings(expected)
-	return (received, dict) => {
+	var f = (received, dict) => {
 		return _match(expected2, received, dict, true);
 	}
+	f.__original_data__ = expected
+	f.__name__ = 'full_match'
+	return f
 }
 
 module.exports = {

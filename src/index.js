@@ -1,5 +1,7 @@
 var util = require('util')
 var matching = require('./matching')
+var zutil = require('./zutil')
+var chalk = require('chalk')
 
 var _steps = []
 var _current_step = null
@@ -22,10 +24,16 @@ var _match = function(expected, received) {
 var _process_event_during_wait = function(evt) {
 	var i = _expected_events.length
 	if(i > 0) {
+		var last_error
 		while(i--) {
 			try {
 				if(_match(_expected_events[i], evt)) {
-					console.log(`Step wait '${_current_step.name}' got expected event ${util.inspect(evt)} while waiting for ${util.inspect(_expected_events)}`)
+					console.log(chalk.green("Step wait '") + chalk.blue(_current_step.name) + chalk.green("' got expected event:"))
+					console.log(zutil.prettyPrint(evt, 1))
+					console.log(chalk.green("while waiting for:"))
+					console.log(zutil.prettyPrint(_expected_events))
+
+					// TODO: need to set variables according to data store.
 					_expected_events.splice(i, 1)
 
 					if(_expected_events.length == 0) {
@@ -35,28 +43,32 @@ var _process_event_during_wait = function(evt) {
 					return
 				}
 			} catch(e) {	
-				; // do nothing, just proceed
+				last_error = e
 			}
 		}
 
-		console.error(`Step wait '${_current_step.name}' got unexpected event ${util.inspect(evt)} while waiting for ${util.inspect(_expected_events)}`)
+		console.error(chalk.red("Step wait '") + chalk.blue(_current_step.name) + chalk.red("' got unexpected event:"))
+		console.error(zutil.prettyPrint(evt, 1))
+		console.error(chalk.red('while waiting for:'))
+		console.error(zutil.prettyPrint(_expected_events))
 		process.exit(1)
 	}
 }
 
 var _process_event_during_sleep = function(evt) {
-	console.error(`Step sleep '${_current_step.name}' awakened by unexpected event ${util.inspect(evt)}`)
+	console.error(chalk.red("Step sleep '") + chalk.blue(_current_step.name) + chalk.red("' awakened by unexpected event:"))
+	console.error(zutil.prettyPrint(evt, 1))
 	process.exit(1)
 }
 
 var _do_exec = (step) => {
 	try {
 		step.fn()
-		console.log('Step exec finished')
+		console.log(chalk.green("Step exec finished"))
 		_current_step = null
 	} catch(e) {
-		console.error("$tep exec '${step.name}' failed")
-		console.error(e)
+		console.error(chalk.red("Step exec '") + chalk.blue(step.name) + "' failed")
+		console.error(chalk.red(e))
 	}
 }
 
@@ -69,7 +81,8 @@ var _do_wait = (step) => {
 
 	setTimeout(() => {
 		if(_expected_events.length > 0) {
-			console.error(`Step wait '${step.name}' timeout while waiting for ${util.inspect(_expected_events)}`)
+			console.error(chalk.red("Step wait '") + chalk.blue(step.name) + chalk.red("' timed out while waiting for:"))
+			console.error(zutil.prettyPrint(_expected_events))
 			process.exit(1)
 		}
 		console.log("All expected events received")
@@ -92,7 +105,7 @@ var _run = () => {
 	//console.log("run")
 	//console.dir(_steps)
 	if(_steps.length == 0) {
-		console.log("success")
+		console.log(chalk.green("Success"))
 		process.exit(0)
 	}
 

@@ -97,9 +97,11 @@ http.createServer(function (req, res) {
 
 The equivalent code using zester would be:
 
+var zester = require('zester');
+var m = require('matching');
 var http = require('http');
 
-http.createServer(m.event_catcher('http', 'request')).listen(8000);
+http.createServer(zester.cb_interceptor('http', 'request')).listen(8000);
 
 zester.wait([
 	{
@@ -114,12 +116,12 @@ zester.exec('process http request', () => {
 	res.end(200)
 })
 			
-In the above, m.event_catcher is used to catch events that happen in the http server and enqueue them for later processing.
+In the above, zester.cb_interceptor is used to catch callbacks that happen in the http server and enqueue them for later processing.
 Then in the zester.wait we collect and assign the variables req and res to permit later processing with zester.exec.
 
 ================================================
 2017/04/09 takeshi:
-We should also be able specify value collection and variable assignment.
+We should also be able to specify value collection and variable assignment.
 
 Thinking again, zest.wait itself implies matches:
 
@@ -132,7 +134,7 @@ zester.wait([
 ], 1000)
 
 So, we will always to partial match for both dicts and arrays.
-Then if some use needs full match, we can define a function full match that would required an exact match:
+Then if some user needs full match, we can define a function full match that would required an exact match:
 	m.full(expected)
 
 ================================================
