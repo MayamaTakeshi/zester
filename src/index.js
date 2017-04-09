@@ -1,4 +1,5 @@
 var util = require('util')
+var matching = require('./matching')
 
 var _steps = []
 var _current_step = null
@@ -9,31 +10,37 @@ var _queued_events = []
 
 var _interval_id;
 
+
 var _match = function(expected, received) {
 	console.log("_match got:")
 	console.dir(expected)
 	console.dir(received)
-	return true
+	var dict = {}
+	return expected(received, dict)
 }
 
 var _process_event_during_wait = function(evt) {
 	var i = _expected_events.length
 	if(i > 0) {
 		while(i--) {
-			if(_match(_expected_events[i], evt)) {
-				console.log(`Step wait '${_current_step.name}' got expected event ${util.inspect(evt)} while waiting for ${util.inspect(_expected_events)}`)
-				_expected_events.splice(i, 1)
-				return
-			} else {
-				console.error(`Step wait '${_current_step.name}' got unexpected event ${util.inspect(evt)} while waiting for ${util.inspect(_expected_events)}`)
-				process.exit(1)
+			try {
+				if(_match(_expected_events[i], evt)) {
+					console.log(`Step wait '${_current_step.name}' got expected event ${util.inspect(evt)} while waiting for ${util.inspect(_expected_events)}`)
+					_expected_events.splice(i, 1)
+
+					if(_expected_events.length == 0) {
+						// all events received
+						_current_step = null; // this will signal to function 'run' command to proceed with next step
+					}
+					return
+				}
+			} catch(e) {	
+				; // do nothing, just proceed
 			}
 		}
 
-		if(_expected_events.length == 0) {
-			// all events received
-			_current_step = null; // this will signal to function 'run' command to proceed with next step
-		}
+		console.error(`Step wait '${_current_step.name}' got unexpected event ${util.inspect(evt)} while waiting for ${util.inspect(_expected_events)}`)
+		process.exit(1)
 	}
 }
 
@@ -144,10 +151,22 @@ module.exports = {
 	},
 
 	wait: (name, events, timeout) => {
+		var events2 = []
+		for(var i=0 ; i<events.length ; i++) {
+			var evt = events[i]
+			if(typeof evt == 'function') {
+				events2.push(evt)
+			} else if (typeof evt == 'array' || typeof evt == 'object') {
+				events2.push(matching.partial_match(evt))
+			} else {
+				throw "Invalid event definition " + evt
+			}
+		}
+
 		_steps.push({
 			type: 'wait',
 			name: name,
-			events: events,
+			events: events2,
 			timeout: timeout,
 		});
 	},

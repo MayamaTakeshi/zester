@@ -1,3 +1,7 @@
+var _ = require('lodash')
+var sm = require('./string_matching')
+
+const re_string_matching_indication = /(^|[^!])!{/
 
 var _null = (x) => { return !x ? true : false }
 
@@ -44,7 +48,11 @@ var _match_dicts = (expected, received, dict, full_match) => {
 	for(var key of keys_e) {
 		var val_e = expected[key]
 		if(val_e == absent) {
-			if(keys_r.has(key)) throw "Element " + key + " should be absent"
+			if(keys_r.has(key)) {
+				throw "Element " + key + " should be absent"
+			} else {
+				console.log("OK: " + key + ' is absent')
+			}
 		} else {
 			if(!keys_r.has(key)) throw "Expected element " + key + " not found"
 			if(!_match(expected[key], received[key], dict, full_match)) throw "No match for element " + key
@@ -74,7 +82,7 @@ var _match = (expected, received, dict, full_match) => {
 		} else if(type_e == 'dict') {
 			return _match_dicts(expected, received, dict, full_match)
 		}
-		if(expected != received) throw "Elements don't match"
+		if(expected != received) throw "Elements expected='" + expected + "' received='" + received + "' don't match"
 
 		return true
 	}
@@ -93,14 +101,39 @@ var collect = (var_name, dict) => {
 	}
 }
 
-var absent = () => {}
+const absent = () => { return 'I am the absent function' }
 
-var partial_match = (expected, received, dict) => {
-	return _match(expected, received, dict, false);
+var _deepMap = (obj, iterator, context) => {
+    return _.transform(obj, function(result, val, key) {
+				var type_val = _typeof(val)
+        result[key] = type_val == 'array' || type_val == 'dict' ?
+                            _deepMap(val, iterator, context) :
+                            iterator.call(context, val, key, obj);
+    });
 }
 
-var full_match = (expected, received, dict) => {
-	return _match(expected, received, dict, true);
+var _matchify_strings = (evt) => {
+	return _deepMap(evt, (x) => {
+		if(typeof x == 'string' && x.match(re_string_matching_indication)) {
+			return sm.gen_matcher(x)
+		} else {
+			return x
+		}
+	})
+}
+
+var partial_match = (expected) => {
+	var expected2 = _matchify_strings(expected)
+	return (received, dict) => {
+		return _match(expected2, received, dict, false)
+	}
+}
+
+var full_match = (expected) => {
+	var expected2 = _matchify_strings(expected)
+	return (received, dict) => {
+		return _match(expected2, received, dict, true);
+	}
 }
 
 module.exports = {

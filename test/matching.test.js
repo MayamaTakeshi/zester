@@ -5,7 +5,7 @@ test('partial_match: arrays matched', () => {
 	var received = [1,2,3,4,[5,6,7]];
 
 	var dict = {}
-	var res = m.partial_match(expected, received, dict)
+	var res = m.partial_match(expected)(received, dict)
 
 	expect(res).toEqual(true)
 })
@@ -16,7 +16,7 @@ test('partial_match: arrays differ in length', () => {
 	var received = [1,2,3,4,[5,6,7,8]];
 
 	var dict = {}
-	var res = m.partial_match(expected, received, dict)
+	var res = m.partial_match(expected)(received, dict)
 	expect(res).toEqual(true)
 })
 
@@ -25,7 +25,7 @@ test('full_match: arrays differ in length', () => {
 	var received = [1,2,3,4,[5,6,7,8]];
 
 	var dict = {}
-	expect( () => m.full_match(expected, received, dict) ).toThrow(/Array lengths don't match/)
+	expect( () => m.full_match(expected)(received, dict) ).toThrow(/Array lengths don't match/)
 })
 
 test("partial_match: no array match", () => {
@@ -33,7 +33,7 @@ test("partial_match: no array match", () => {
 	var received = [1,2,3,4,[5,6,77]];
 
 	var dict = {}
-	expect( () => m.partial_match(expected, received, dict) ).toThrow(/Elements don't match/)
+	expect( () => m.partial_match(expected)(received, dict) ).toThrow(/Elements don't match/)
 })
 
 
@@ -51,7 +51,7 @@ test('partial_match: dicts matched', () => {
 	}
 	
 	var dict = {}
-	var res = m.partial_match(expected, received, dict)
+	var res = m.partial_match(expected)(received, dict)
 	expect(res).toEqual(true)
 })
 
@@ -65,6 +65,7 @@ test('partial_match: absent', () => {
 		c: ['zero', 1, true],
 	}
 	var received = {
+		b: 2,
 		b: {
 			AA: 1,
 			BB: 2,
@@ -73,7 +74,7 @@ test('partial_match: absent', () => {
 	}
 
 	var dict = {}
-	var res = m.partial_match(expected, received, dict)
+	var res = m.partial_match(expected)(received, dict)
 	expect(res).toEqual(true)
 })
 
@@ -90,7 +91,6 @@ test('partial_match: not absent', () => {
 	}
 
 	var dict = {}
-	expect( () => m.partial_match(expected, received, dict) ).toThrow(/should be absent/)
+	expect( () => m.partial_match(expected)(received, dict) ).toThrow(/should be absent/)
 })
-
 

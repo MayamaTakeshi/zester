@@ -25,3 +25,15 @@ test('process valid match string', () => {
 	})		
 })
 
+test('invalid match string', () => {
+	expect( () => { sm.gen_matcher(`!{`) } ).toThrow(/Invalid match expression/)
+})
+
+test('key already set in dict', () => {
+	var matcher = sm.gen_matcher(`name=!{name}`)
+	var dict = {
+		name: 'spock',
+	} 
+
+	expect( () => { matcher(`name=sulu`, dict) }).toThrow(/already/)
+})

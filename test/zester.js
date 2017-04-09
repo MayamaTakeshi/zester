@@ -16,19 +16,19 @@ z.exec('one', () => {
 
 z.exec('two', () => {
 	setTimeout(() => {
-		em.emit("something_happened", 'arg1', 'arg2', 'arg3', 4, true, new Date)
+		em.emit("evt1", 'arg1', 'arg2', 'arg3', 4, true, new Date)
 	}, 2000)
 })
 
 z.exec('three', () => {
 	setTimeout(() => {
-		em.emit("something_happened2", {a: 1, b: 2})
+		em.emit("evt2", {a: 1, b: 2})
 	}, 2100)
 })
 
 z.exec('three', () => {
 	setTimeout(() => {
-		em.emit("something_happened3")
+		em.emit("evt3")
 	}, 2000 * 60)
 })
 
@@ -39,12 +39,16 @@ z.sleep('first', 1000)
 
 z.wait('some_event', [
 	{
-		source: 'XXX',
-		name: 'YYY',
+		source: 'my_emitter',
+		name: 'evt1',
 	},
 	{
-		source: 'XXX',
-		name: 'YYY',
+		source: 'my_emitter',
+		name: 'evt2',
+	},
+	{
+		source: 'bla',
+		name: 'x',
 	},
 ], 2000)
 
