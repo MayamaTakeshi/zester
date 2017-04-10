@@ -21,6 +21,13 @@ test('process valid match string', () => {
 
 })
 
+test('start with capture', () => {
+		expect(smp.parse('!{something}')).toEqual([
+		{ op: 'collect', name: 'something' },
+	])
+
+})
+
 test('unclosed !{}', () => {
 	expect( () => { smp.parse('abc!{') } ).toThrow()
 })

@@ -12,13 +12,30 @@ var _queued_events = []
 
 var _interval_id;
 
+var _dict = {}
 
 var _match = function(expected, received) {
 	console.log("_match got:")
 	console.dir(expected)
 	console.dir(received)
-	var dict = {}
-	return expected(received, dict)
+	return expected(received, _dict)
+}
+
+var _set_global_vars = (dict) => {
+	for(var key in dict) {
+		console.log("trying to set " + key)
+		var val_type = eval('typeof ' + key)
+		var val = dict[key]
+		if(val_type == 'undefined') {
+			console.log("pp1")
+			eval(key + '=' + util.inspect(val))
+			console.log("pp2")
+		} else {
+			console.log("pp3")
+			if(eval(key + '!=' + val)) throw 'Cannot set global var ' + key + ' to ' + util.inspect(val) + ' as it is already set to ' + util.inspect(eval(key))
+			console.log("pp4")
+		}
+	}
 }
 
 var _process_event_during_wait = function(evt) {
@@ -28,6 +45,7 @@ var _process_event_during_wait = function(evt) {
 		while(i--) {
 			try {
 				if(_match(_expected_events[i], evt)) {
+					_set_global_vars(_dict)
 					console.log(chalk.green("Step wait '") + chalk.blue(_current_step.name) + chalk.green("' got expected event:"))
 					console.log(zutil.prettyPrint(evt, 1))
 					console.log(chalk.green("while waiting for:"))
@@ -44,6 +62,7 @@ var _process_event_during_wait = function(evt) {
 				}
 			} catch(e) {	
 				last_error = e
+				console.error(last_error)
 			}
 		}
 
@@ -73,6 +92,7 @@ var _do_exec = (step) => {
 }
 
 var _do_wait = (step) => {
+	_dict = {}
 	_expected_events = step.events
 	while(_queued_events.length > 0) {
 		var evt = _queued_events.shift()

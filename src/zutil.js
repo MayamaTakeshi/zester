@@ -39,10 +39,14 @@ var _prettyPrint = (x, depth=0, same_line) => {
 	var front_indent = same_line ? '' : _i(depth)
 	if(Array.isArray(x)) {
 		return front_indent + "[\n" + _prettyPrintArrayElements(x, depth+1) + "\n" + _i(depth) + "]"
-	} else if(typeof x == 'function' && x.__original_data__) {
-		return front_indent + x.__name__ + "(\n" + _prettyPrintDictElements(x.__original_data__, depth+1) + "\n" + _i(depth) + ")"
 	} else if(typeof x == 'object') {
 		return front_indent + "{\n" + _prettyPrintDictElements(x, depth+1) + "\n" + _i(depth) + "}"
+	} else if(typeof x == 'function' && x.__original_data__) {
+		var isArr = Array.isArray(x.__original_data__) 
+		return front_indent + x.__name__ + 
+			(isArr ? "([\n" : "({\n") + 
+			(isArr ? _prettyPrintArrayElements(x.__original_data__, depth+1) : _prettyPrintDictElements(x.__original_data__, depth+1)) + "\n" +
+			_i(depth) + (isArr ? "])" : "})")
 	} else {
 		return _i(depth) + util.inspect(x)
 	}

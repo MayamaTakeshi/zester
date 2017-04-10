@@ -16,6 +16,7 @@ test('process valid match string', () => {
 
 	var res = matcher(`"${alias}" <${proto}:${user}@${ip}:${port};tag=${tag};phone=${phone}>`, dict)
 
+	expect(res).toEqual(true)
 	expect(dict).toEqual({
 		user: user,
 		ip: ip,
@@ -25,8 +26,8 @@ test('process valid match string', () => {
 	})		
 })
 
-test('invalid match string', () => {
-	expect( () => { sm.gen_matcher(`!{`) } ).toThrow(/Invalid match expression/)
+test('invalid string match expression', () => {
+	expect( () => { sm.gen_matcher(`!{`) } ).toThrow(/Invalid string match expression/)
 })
 
 test('key already set in dict', () => {

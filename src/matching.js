@@ -1,5 +1,6 @@
 var _ = require('lodash')
 var sm = require('./string_matching')
+var util = require('util')
 
 const re_string_matching_indication = /(^|[^!])!{/
 
@@ -46,6 +47,7 @@ var _match_dicts = (expected, received, dict, full_match) => {
 	var keys_r = new Set(Object.keys(received))
 
 	for(var key of keys_e) {
+		console.log("Checking " + key)
 		var val_e = expected[key]
 		if(val_e == absent) {
 			if(keys_r.has(key)) {
@@ -88,16 +90,28 @@ var _match = (expected, received, dict, full_match) => {
 	}
 
 	if(type_e == 'function') {
-		return expected(received, dict)
+		var x
+		try {
+			var x = expected(received, dict)
+			return x
+		} catch(e) {
+			console.error(e)
+			throw e	
+		}
 	}
 
 	return false
 }
 
-var collect = (var_name, dict) => {
-	return (val) => {
-		eval(var_name + " = " + val)
-		return true
+var collect = (var_name) => {
+	return (val, dict) => {
+		if(typeof dict[var_name] == 'undefined') {
+			dict[var_name] = val
+			return true
+		} else {
+			if(dict[var_name] != val) throw "Cannot set " + var_name + " to " + util.inspect(val) + " because it is already set to " + util.inspect(dict[var_name])
+			return true
+		}
 	}
 }
 

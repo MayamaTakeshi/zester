@@ -72,6 +72,7 @@ var _match = (steps, received, dict) => {
 				throw "Invalid match step"
 		}
 	}	
+	return true
 }
 
 var gen_matcher = (expected) => {
@@ -79,7 +80,8 @@ var gen_matcher = (expected) => {
 	try {
 		steps = smp.parse(expected)
 	} catch (e) {
-		throw "Invalid match expression '" + expected + "'"
+		console.error(e)
+		throw "Invalid string match expression '" + expected + "'"
 	}
 	return (received, dict) => {
 		return _match(steps, received, dict)
