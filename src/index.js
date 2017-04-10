@@ -28,11 +28,12 @@ var _set_global_vars = (dict) => {
 		var val = dict[key]
 		if(val_type == 'undefined') {
 			console.log("pp1")
-			eval(key + '=' + util.inspect(val))
+			console.log(util.inspect(val))
+			eval(key + '=' + (typeof val == 'string' ? util.inspect(val) : 'val'))
 			console.log("pp2")
 		} else {
 			console.log("pp3")
-			if(eval(key + '!=' + val)) throw 'Cannot set global var ' + key + ' to ' + util.inspect(val) + ' as it is already set to ' + util.inspect(eval(key))
+			if(eval(key + '!=' + val)) throw 'Cannot set global var ' + key + ' to val ' + ' as it is already set to ' + eval(key)
 			console.log("pp4")
 		}
 	}
@@ -153,6 +154,16 @@ var _run = () => {
 	setTimeout(_run, 1)
 }
 
+var _handle_event = (evt) => {
+	if(_current_step && _current_step.type == 'wait') {
+		_process_event_during_wait(evt)
+	} else if(_current_step && _current_step.type == 'sleep') {
+		_process_event_during_sleep(evt)
+	}	else {
+		_queued_events.push(evt)
+	}
+}
+
 module.exports = {
 	trap_events: function(emitter, name) {
 		var orig_emit = emitter.emit
@@ -164,15 +175,13 @@ module.exports = {
 				name: event_name,
 				args: args, 
 			}
-			if(_current_step && _current_step.type == 'wait') {
-				_process_event_during_wait(evt)
-			} else if(_current_step && _current_step.type == 'sleep') {
-				_process_event_during_sleep(evt)
-			}	else {
-				_queued_events.push(evt)
-			}
+			_handle_event(evt)
 			orig_emit.apply(emitter, arguments)
 		}
+	},
+
+	push_event: function(evt) {
+		_handle_event(evt)
 	},
 
 	exec: (name, fn) => {

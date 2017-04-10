@@ -40,6 +40,9 @@ var _prettyPrint = (x, depth=0, same_line) => {
 	if(Array.isArray(x)) {
 		return front_indent + "[\n" + _prettyPrintArrayElements(x, depth+1) + "\n" + _i(depth) + "]"
 	} else if(typeof x == 'object') {
+		if(util.inspect(x).indexOf('[Circular]') >= 0) {
+			return '[Object]'
+		}
 		return front_indent + "{\n" + _prettyPrintDictElements(x, depth+1) + "\n" + _i(depth) + "}"
 	} else if(typeof x == 'function' && x.__original_data__) {
 		var isArr = Array.isArray(x.__original_data__) 
