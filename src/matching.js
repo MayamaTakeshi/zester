@@ -6,13 +6,13 @@ const re_string_matching_indication = /(^|[^!])!{/
 
 var _null = (x) => { return !x ? true : false }
 
-var _nonZero = (x) => {
+var _non_zero = (x) => {
 	if(typeof x != 'number') return false
 
 	return x != 0 
 }
 
-var _nonBlankStr = (x) => {
+var _non_blank_str = (x) => {
 	if(typeof x != 'string') return false
 
 	return x != "" 
@@ -164,4 +164,7 @@ module.exports = {
 	full_match: full_match,
 	collect: collect,
 	absent: absent,
+	null: _null,
+	non_zero: _non_zero,
+	non_blank_str: _non_blank_str,
 }
