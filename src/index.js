@@ -32,9 +32,11 @@ var _set_global_vars = (dict) => {
 		var val = dict[key]
 		if(val_type == 'undefined') {
 			console.log(util.inspect(val))
-			eval(key + '=' + (typeof val == 'string' ? util.inspect(val) : 'val'))
+			eval(key + ' = ' + (typeof val == 'string' ? util.inspect(val) : 'val'))
 		} else {
-			if(eval(key + '!=' + val)) throw 'Cannot set global var ' + key + ' to val ' + ' as it is already set to ' + eval(key)
+			if(util.inspect(eval(key)) != util.inspect(val)) {
+				throw 'Cannot set global var ' + key + ' to val ' + ' as it is already set to ' + eval(key)
+			}
 		}
 	}
 }
