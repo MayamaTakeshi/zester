@@ -88,6 +88,7 @@ var _do_exec = (step) => {
 	} catch(e) {
 		console.error(chalk.red("Step exec '") + chalk.blue(step.name) + "' failed")
 		console.error(chalk.red(e))
+		process.exit(1)
 	}
 }
 
