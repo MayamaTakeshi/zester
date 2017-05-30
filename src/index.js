@@ -14,6 +14,8 @@ var _interval_id;
 
 var _dict = {}
 
+var _timer_id = null
+
 var _match = function(expected, received) {
 	console.log("_match got:")
 	console.dir(expected)
@@ -27,14 +29,10 @@ var _set_global_vars = (dict) => {
 		var val_type = eval('typeof ' + key)
 		var val = dict[key]
 		if(val_type == 'undefined') {
-			console.log("pp1")
 			console.log(util.inspect(val))
 			eval(key + '=' + (typeof val == 'string' ? util.inspect(val) : 'val'))
-			console.log("pp2")
 		} else {
-			console.log("pp3")
 			if(eval(key + '!=' + val)) throw 'Cannot set global var ' + key + ' to val ' + ' as it is already set to ' + eval(key)
-			console.log("pp4")
 		}
 	}
 }
@@ -57,6 +55,7 @@ var _process_event_during_wait = function(evt) {
 
 					if(_expected_events.length == 0) {
 						// all events received
+						clearTimeout(_timerId)
 						_current_step = null; // this will signal to function 'run' command to proceed with next step
 					}
 					return
@@ -100,7 +99,7 @@ var _do_wait = (step) => {
 		_process_event_during_wait(evt)
 	}
 
-	setTimeout(() => {
+	_timerId = setTimeout(() => {
 		if(_expected_events.length > 0) {
 			console.error(chalk.red("Step wait '") + chalk.blue(step.name) + chalk.red("' timed out while waiting for:"))
 			console.error(zutil.prettyPrint(_expected_events))
@@ -117,7 +116,7 @@ var _do_sleep = (step) => {
 	}
 
 	setTimeout(() => {
-		console.log("sleep timeout. Awakening")
+		console.log(`sleep ${step.name} of ${step.timeout} ms timeout. Awakening`)
 		_current_step = null;
 	}, step.timeout)
 } 
@@ -125,7 +124,7 @@ var _do_sleep = (step) => {
 var _run = () => {
 	//console.log("run")
 	//console.dir(_steps)
-	if(_steps.length == 0) {
+	if(_steps.length == 0 && !_current_step) {
 		console.log(chalk.green("Success"))
 		process.exit(0)
 	}

@@ -88,10 +88,12 @@ z.exec('check name', () => {
 	assert.equal(the_CC, 3)
 })
 
-z.sleep('second', 1000)
+z.sleep('second', 250)
 
 z.sleep('third', 500)
 
-z.sleep('fourth', 250)
+z.sleep('fourth', 1000)
+
+z.sleep('fifth', 5000)
 
 z.run()
