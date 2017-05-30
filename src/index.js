@@ -18,6 +18,8 @@ var _timer_id = null
 
 var _event_filters = []
 
+var _step_names = new Set()
+
 var _match = function(expected, received) {
 	console.log("_match got:")
 	console.dir(expected)
@@ -34,6 +36,8 @@ var _set_global_vars = (dict) => {
 			console.log(util.inspect(val))
 			eval(key + ' = ' + (typeof val == 'string' ? util.inspect(val) : 'val'))
 		} else {
+			console.log("key to evaluate: ", key)
+			console.log("val : ", val)
 			if(util.inspect(eval(key)) != util.inspect(val)) {
 				throw 'Cannot set global var ' + key + ' to val ' + ' as it is already set to ' + eval(key)
 			}
@@ -213,6 +217,24 @@ var _handle_event = evt => {
 	}
 }
 
+var _check_step = (type, name, params, spec) => {
+	if(_step_names.has(name)) {
+		throw `Name '${name}' used by more than one step. Please use unique names for steps as this will permit to easily track errors.`
+	}
+
+	if(params.length != spec.length) {
+		throw `Step ${type} '${name}': invalid number of params. Expected ${spec.length}. Got ${params.length}`
+	}
+
+	for(var i=0 ; i<spec.length ; ++i) {
+		if(typeof params[i] != spec[i]) {
+			throw `Step ${type} '${name}': invalid type for param ${i+2}. Expected '${spec[i]}'. Got '${typeof params[i]}'`
+		}
+	}
+
+	_step_names.add(name)
+}
+
 module.exports = {
 	trap_events: function(emitter, name) {
 		var orig_emit = emitter.emit
@@ -234,6 +256,7 @@ module.exports = {
 	},
 
 	exec: (name, fn) => {
+		_check_step('exec', name, [fn], ['function']) 
 		_steps.push({
 			type: 'exec',
 			name: name,
@@ -242,6 +265,7 @@ module.exports = {
 	},
 
 	wait: (name, events, timeout) => {
+		_check_step('wait', name, [events, timeout], ['object', 'number']) 
 		var events2 = []
 		for(var i=0 ; i<events.length ; i++) {
 			var evt = events[i]
@@ -263,6 +287,7 @@ module.exports = {
 	},
 
 	sleep: (name, timeout) => {
+		_check_step('sleep', name, [timeout], ['number']) 
 		_steps.push({
 			type: 'sleep',
 			name: name,
@@ -271,6 +296,8 @@ module.exports = {
 	},
 
 	add_event_filter: (name, ef) => {
+		_check_step('add_event_filter', name, [ef], ['object']) 
+
 		var mf
 		if(typeof ef == 'function') {
 			mf = ef
@@ -290,6 +317,7 @@ module.exports = {
 	},
 
 	remove_event_filter: (name) => {
+		_check_step('remove_event_filter', name, [], []) 
 		_steps.push({
 			type: 'remove_event_filter',
 			name: name,
