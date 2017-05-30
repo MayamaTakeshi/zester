@@ -16,6 +16,8 @@ var _dict = {}
 
 var _timer_id = null
 
+var _event_filters = []
+
 var _match = function(expected, received) {
 	console.log("_match got:")
 	console.dir(expected)
@@ -118,9 +120,29 @@ var _do_sleep = (step) => {
 
 	setTimeout(() => {
 		console.log(`sleep ${step.name} of ${step.timeout} ms timeout. Awakening`)
-		_current_step = null;
+		_current_step = null
 	}, step.timeout)
 } 
+
+var _do_add_event_filter = step => {
+	step.event_filter._name = step.name
+	_event_filters.push(step.event_filter)
+	_current_step = null
+}
+
+var _do_remove_event_filter = step => {
+	var len = _event_filters.length
+
+	_event_filters = _event_filters.filter(mf => {
+		return mf._name != step.name
+	})
+
+	if(len == _event_filters.length) {
+		console.error(`Could not remove filter ${step.name}: not found`)
+		process.exit(1)
+	}
+	_current_step = null
+}
 
 var _run = () => {
 	//console.log("run")
@@ -145,6 +167,12 @@ var _run = () => {
 		case 'sleep':
 			_do_sleep(_current_step)
 			break
+		case 'add_event_filter':
+			_do_add_event_filter(_current_step)
+			break
+		case 'remove_event_filter':
+			_do_remove_event_filter(_current_step)
+			break
 		default:
 			console.error(`Unsupported step ${_current_step.type}`)	
 			process.exit(1)
@@ -154,12 +182,31 @@ var _run = () => {
 	setTimeout(_run, 1)
 }
 
-var _handle_event = (evt) => {
+var _should_ignore_event = evt => {
+	for (var i=0 ; i<_event_filters.length ; ++i) {
+		try {
+			if(_match(_event_filters[i], evt)) {
+				return true					
+			}
+		} catch(e) {
+			//do nothing	
+		}
+	}
+	return false
+}
+
+var _handle_event = evt => {
+	if(_should_ignore_event(evt)) {
+		console.log("Ignoring event:")
+		console.log(zutil.prettyPrint(evt, 1))
+		return
+	}
+
 	if(_current_step && _current_step.type == 'wait') {
 		_process_event_during_wait(evt)
 	} else if(_current_step && _current_step.type == 'sleep') {
 		_process_event_during_sleep(evt)
-	}	else {
+	} else {
 		_queued_events.push(evt)
 	}
 }
@@ -218,6 +265,32 @@ module.exports = {
 			type: 'sleep',
 			name: name,
 			timeout: timeout,
+		})
+	},
+
+	add_event_filter: (name, ef) => {
+		var mf
+		if(typeof ef == 'function') {
+			mf = ef
+		} else if (typeof ef == 'array' || typeof ef == 'object') {
+			mf = matching.partial_match(ef)
+		} else {
+			console.error("Invalid event filter definition for " + name)
+			console.dir(ef)
+			process.exit(1)
+		}
+
+		_steps.push({
+			type: 'add_event_filter',
+			name: name,
+			event_filter: mf
+		});
+	},
+
+	remove_event_filter: (name) => {
+		_steps.push({
+			type: 'remove_event_filter',
+			name: name,
 		})
 	},
 

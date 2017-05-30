@@ -8,6 +8,8 @@ class MyEmitter extends EE {}
 
 var em = new MyEmitter()
 
+var filter_id
+
 z.trap_events(em, 'my_emitter')
 
 z.exec('one', () => {
@@ -19,7 +21,7 @@ z.exec('one', () => {
 z.exec('two', () => {
 	setTimeout(() => {
 		em.emit("evt1", 'arg1', 'arg2', 'arg3', 4, true, new Date)
-	}, 2000)
+	}, 4000)
 })
 
 z.exec('three', () => {
@@ -42,16 +44,41 @@ z.exec('three', () => {
 				d: [11,22,33],
 			}
 		)
-	}, 2100)
+	}, 6000)
 })
 
 z.exec('three', () => {
 	setTimeout(() => {
 		em.emit("evt3")
-	}, 2000 * 60)
+		em.emit("evt4")
+	}, 1000)
 })
 
-z.sleep('first', 1000)
+z.add_event_filter('filter evt4', {
+	name: 'evt4'
+})
+
+z.wait('evt3', [
+	{
+		name: 'evt3',
+	}	
+], 2000)
+
+z.sleep(1000)
+
+z.remove_event_filter('filter evt4')
+
+z.exec('four', () => {
+	setTimeout(() => {
+		em.emit("evt4")
+	}, 1000)
+})
+
+z.wait('evt4', [
+	{
+		name: 'evt4',
+	}	
+], 2000)
 
 z.wait('some_event', [
 	{
@@ -79,7 +106,7 @@ z.wait('some_event', [
 			},
 		],
 	},
-], 2000)
+], 6000)
 
 z.exec('check name', () => {
 	console.log("name=" + name)
