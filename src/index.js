@@ -222,5 +222,7 @@ module.exports = {
 	},
 
 	run: _run,
+
+	matching: matching,
 }
 
