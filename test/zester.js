@@ -12,19 +12,19 @@ var filter_id
 
 z.trap_events(em, 'my_emitter')
 
-z.exec('one', () => {
+z.exec(() => {
 	setInterval(function() {
 		console.log(new Date);
 	}, 1000);
 })
 
-z.exec('two', () => {
+z.exec(() => {
 	setTimeout(() => {
 		em.emit("evt1", 'arg1', 'arg2', 'arg3', 4, true, new Date)
 	}, 4000)
 })
 
-z.exec('three', () => {
+z.exec(() => {
 	setTimeout(() => {
 		em.emit(
 			"evt2",
@@ -47,40 +47,42 @@ z.exec('three', () => {
 	}, 6000)
 })
 
-z.exec('four', () => {
+z.exec(() => {
 	setTimeout(() => {
 		em.emit("evt3")
 		em.emit("evt4")
 	}, 1000)
 })
 
-z.add_event_filter('filter evt4', {
+var filter = {
 	name: 'evt4'
-})
+}
 
-z.wait('evt3', [
+z.add_event_filter(filter)
+ 
+z.wait([
 	{
 		name: 'evt3',
 	}	
 ], 2000)
 
-z.sleep('five', 1000)
+z.sleep(1000)
 
-z.remove_event_filter('filter evt4')
+z.remove_event_filter(filter)
 
-z.exec('six', () => {
+z.exec(() => {
 	setTimeout(() => {
 		em.emit("evt4")
 	}, 1000)
 })
 
-z.wait('evt4', [
+z.wait([
 	{
 		name: 'evt4',
 	}	
 ], 2000)
 
-z.wait('some_event', [
+z.wait([
 	{
 		source: 'my_emitter',
 		name: 'evt1',
@@ -108,19 +110,19 @@ z.wait('some_event', [
 	},
 ], 6000)
 
-z.exec('check name', () => {
+z.exec(() => {
 	console.log("name=" + name)
 	assert.equal(name, 'eeee')
 	console.log("the_CC=" + the_CC)
 	assert.equal(the_CC, 3)
 })
 
-z.sleep('seventh', 250)
+z.sleep(250)
 
-z.sleep('eighth', 500)
+z.sleep(500)
 
-z.sleep('ninth', 1000)
+z.sleep(1000)
 
-z.sleep('tenth', 5000)
+z.sleep(5000)
 
 z.run()

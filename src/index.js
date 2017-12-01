@@ -18,7 +18,31 @@ var _timer_id = null
 
 var _event_filters = []
 
-var _step_names = new Set()
+Object.defineProperty(global, '__stack', {
+get: function() {
+        var orig = Error.prepareStackTrace;
+        Error.prepareStackTrace = function(_, stack) {
+            return stack;
+        };
+        var err = new Error;
+        Error.captureStackTrace(err, arguments.callee);
+        var stack = err.stack;
+        Error.prepareStackTrace = orig;
+        return stack;
+    }
+});
+
+Object.defineProperty(global, '__caller_line', {
+get: function() {
+        return __stack[2].getLineNumber();
+    }
+});
+
+Object.defineProperty(global, '__function', {
+get: function() {
+        return __stack[1].getFunctionName();
+    }
+});
 
 var _match = function(expected, received) {
 	console.log("_match got:")
@@ -53,7 +77,7 @@ var _process_event_during_wait = function(evt) {
 			try {
 				if(_match(_expected_events[i], evt)) {
 					_set_global_vars(_dict)
-					console.log(chalk.green("Step wait '") + chalk.blue(_current_step.name) + chalk.green("' got expected event:"))
+					console.log(chalk.green(`wait (line ${_current_step.line}) got expected event:`))
 					console.log(zutil.prettyPrint(evt, 1))
 					console.log(chalk.green("while waiting for:"))
 					console.log(zutil.prettyPrint(_expected_events))
@@ -74,7 +98,7 @@ var _process_event_during_wait = function(evt) {
 			}
 		}
 
-		console.error(chalk.red("Step wait '") + chalk.blue(_current_step.name) + chalk.red("' got unexpected event:"))
+		console.error(chalk.red(`wait (line ${_current_step.line}) got unexpected event:`))
 		console.error(zutil.prettyPrint(evt, 1))
 		console.error(chalk.red('while waiting for:'))
 		console.error(zutil.prettyPrint(_expected_events))
@@ -83,7 +107,7 @@ var _process_event_during_wait = function(evt) {
 }
 
 var _process_event_during_sleep = function(evt) {
-	console.error(chalk.red("Step sleep '") + chalk.blue(_current_step.name) + chalk.red("' awakened by unexpected event:"))
+	console.error(chalk.red(`sleep (line ${_current_step.line}) awakened by unexpected event:`))
 	console.error(zutil.prettyPrint(evt, 1))
 	process.exit(1)
 }
@@ -91,10 +115,10 @@ var _process_event_during_sleep = function(evt) {
 var _do_exec = (step) => {
 	try {
 		step.fn()
-		console.log(chalk.green("Step exec finished"))
+		console.log(chalk.green("exec finished"))
 		_current_step = null
 	} catch(e) {
-		console.error(chalk.red("Step exec '") + chalk.blue(step.name) + "' failed")
+		console.error(chalk.red(`exec (line ${step.line}) failed`))
 		console.error(chalk.red(e))
 		process.exit(1)
 	}
@@ -110,7 +134,7 @@ var _do_wait = (step) => {
 
 	_timerId = setTimeout(() => {
 		if(_expected_events.length > 0) {
-			console.error(chalk.red("Step wait '") + chalk.blue(step.name) + chalk.red("' timed out while waiting for:"))
+			console.error(chalk.red(`wait (line ${step.line}) timed out while waiting for:`))
 			console.error(zutil.prettyPrint(_expected_events))
 			process.exit(1)
 		}
@@ -125,13 +149,12 @@ var _do_sleep = (step) => {
 	}
 
 	setTimeout(() => {
-		console.log(`sleep ${step.name} of ${step.timeout} ms timeout. Awakening`)
+		console.log(chalk.green(`sleep (line ${step.line}) timeout. Awakening`))
 		_current_step = null
 	}, step.timeout)
 } 
 
 var _do_add_event_filter = step => {
-	step.event_filter._name = step.name
 	_event_filters.push(step.event_filter)
 	_current_step = null
 }
@@ -139,12 +162,12 @@ var _do_add_event_filter = step => {
 var _do_remove_event_filter = step => {
 	var len = _event_filters.length
 
-	_event_filters = _event_filters.filter(mf => {
-		return mf._name != step.name
+	_event_filters = _event_filters.filter(f => {
+		return f[0] != step.event_filter;
 	})
 
 	if(len == _event_filters.length) {
-		console.error(`Could not remove filter ${step.name}: not found`)
+		console.error(chalk.red(`remove_event_filter (line ${step.line}) failed: filter not found`))
 		process.exit(1)
 	}
 	_current_step = null
@@ -161,7 +184,7 @@ var _run = () => {
 	if(!_current_step) {
 		_queued_events = [];
 		_current_step = _steps.shift()
-		console.log(`Starting step ${_current_step.type} '${_current_step.name}'`)
+		console.log(chalk.green(`Starting ${_current_step.type} (line ${_current_step.line})`))
 
 		switch(_current_step.type) {	
 		case 'exec':
@@ -191,7 +214,7 @@ var _run = () => {
 var _should_ignore_event = evt => {
 	for (var i=0 ; i<_event_filters.length ; ++i) {
 		try {
-			if(_match(_event_filters[i], evt)) {
+			if(_match(_event_filters[i][1], evt)) {
 				return true					
 			}
 		} catch(e) {
@@ -217,24 +240,16 @@ var _handle_event = evt => {
 	}
 }
 
-var _check_step = (type, name, params, spec) => {
-	if(_step_names.has(name)) {
-		if(!['add_event_filter', 'remove_event_filter'].includes(type)) {
-			throw `Name '${name}' used by more than one step. Please use unique names for steps as this will permit to easily track errors.`
-		}
-	}
-
+var _check_step = (type, params, spec) => {
 	if(params.length != spec.length) {
-		throw `Step ${type} '${name}': invalid number of params. Expected ${spec.length}. Got ${params.length}`
+		throw `${type}: invalid number of params. Expected ${spec.length}. Got ${params.length}`
 	}
 
 	for(var i=0 ; i<spec.length ; ++i) {
 		if(typeof params[i] != spec[i]) {
-			throw `Step ${type} '${name}': invalid type for param ${i+2}. Expected '${spec[i]}'. Got '${typeof params[i]}'`
+			throw `${type}: invalid type for param ${i+2}. Expected '${spec[i]}'. Got '${typeof params[i]}'`
 		}
 	}
-
-	_step_names.add(name)
 }
 
 module.exports = {
@@ -257,17 +272,17 @@ module.exports = {
 		_handle_event(evt)
 	},
 
-	exec: (name, fn) => {
-		_check_step('exec', name, [fn], ['function']) 
+	exec: (fn) => {
+		_check_step(__function, [fn], ['function']) 
 		_steps.push({
-			type: 'exec',
-			name: name,
+			type: __function,
 			fn: fn,
+			line: __caller_line,
 		})
 	},
 
-	wait: (name, events, timeout) => {
-		_check_step('wait', name, [events, timeout], ['object', 'number']) 
+	wait: (events, timeout) => {
+		_check_step(__function, [events, timeout], ['object', 'number']) 
 		var events2 = []
 		for(var i=0 ; i<events.length ; i++) {
 			var evt = events[i]
@@ -281,24 +296,24 @@ module.exports = {
 		}
 
 		_steps.push({
-			type: 'wait',
-			name: name,
+			type: __function,
 			events: events2,
 			timeout: timeout,
+			line: __caller_line,
 		});
 	},
 
-	sleep: (name, timeout) => {
-		_check_step('sleep', name, [timeout], ['number']) 
+	sleep: (timeout) => {
+		_check_step(__function, [timeout], ['number']) 
 		_steps.push({
-			type: 'sleep',
-			name: name,
+			type: __function,
 			timeout: timeout,
+			line: __caller_line,
 		})
 	},
 
-	add_event_filter: (name, ef) => {
-		_check_step('add_event_filter', name, [ef], ['object']) 
+	add_event_filter: (ef) => {
+		_check_step(__function, [ef], ['object']) 
 
 		var mf
 		if(typeof ef == 'function') {
@@ -306,23 +321,24 @@ module.exports = {
 		} else if (typeof ef == 'array' || typeof ef == 'object') {
 			mf = matching.partial_match(ef)
 		} else {
-			console.error("Invalid event filter definition for " + name)
+			console.error("Invalid event filter definition for " + __function)
 			console.dir(ef)
 			process.exit(1)
 		}
 
 		_steps.push({
-			type: 'add_event_filter',
-			name: name,
-			event_filter: mf
+			type: __function,
+			event_filter: [ef, mf],
+			line: __caller_line,	
 		});
 	},
 
-	remove_event_filter: (name) => {
-		_check_step('remove_event_filter', name, [], []) 
+	remove_event_filter: (ef) => {
+		_check_step(__function, [ef], ['object']) 
 		_steps.push({
-			type: 'remove_event_filter',
-			name: name,
+			type: __function,
+			event_filter: ef,
+			line: __caller_line,	
 		})
 	},
 
