@@ -271,6 +271,17 @@ module.exports = {
 		}
 	},
 
+	callback_trap: function(name) {
+		return function() {
+			var evt = {
+				source: 'callback',
+				name: name,
+				args: arguments,
+			}
+			_handle_event(evt)
+		}
+	},
+
 	push_event: function(evt) {
 		_handle_event(evt)
 	},

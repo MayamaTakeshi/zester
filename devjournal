@@ -152,7 +152,7 @@ To run unit tests:
 
 To run sample test do:
   cd test/
-  node zester.js
+  node zester_test.js
 
 For reference, node version used: v7.10.0
 
