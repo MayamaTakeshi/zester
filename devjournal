@@ -147,7 +147,12 @@ instead of:
 ================================================
 2017/12/01 takeshi:
 
-To run tests:
+To run unit tests:
   node_modules/jest/bin/jest.js
+
+To run sample test do:
+  cd test/
+  node zester.js
+
 
 
