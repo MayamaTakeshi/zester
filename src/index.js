@@ -63,7 +63,8 @@ var _set_global_vars = (dict) => {
 			console.log("key to evaluate: ", key)
 			console.log("val : ", val)
 			if(util.inspect(eval(key)) != util.inspect(val)) {
-				throw 'Cannot set global var ' + key + ' to val ' + ' as it is already set to ' + eval(key)
+				console.error(chalk.red(`Cannot set global var '${key}' to '${val}' as it is already set to '` + eval(key)))
+				process.exit(1)
 			}
 		}
 	}
@@ -240,14 +241,16 @@ var _handle_event = evt => {
 	}
 }
 
-var _check_step = (type, params, spec) => {
+var _check_step = (type, caller_line, params, spec) => {
 	if(params.length != spec.length) {
-		throw `${type}: invalid number of params. Expected ${spec.length}. Got ${params.length}`
+		console.error(chalk.red(`${type} (line ${caller_line}): invalid number of params. Expected ${spec.length}. Got ${params.length}`))
+		process.exit(1)
 	}
 
 	for(var i=0 ; i<spec.length ; ++i) {
 		if(typeof params[i] != spec[i]) {
-			throw `${type}: invalid type for param ${i+2}. Expected '${spec[i]}'. Got '${typeof params[i]}'`
+			console.error(chalk.red(`${type} (line ${caller_line}): invalid type for param ${i+1}. Expected '${spec[i]}'. Got '${typeof params[i]}'`))
+			process.exit(1)
 		}
 	}
 }
@@ -273,7 +276,7 @@ module.exports = {
 	},
 
 	exec: (fn) => {
-		_check_step(__function, [fn], ['function']) 
+		_check_step(__function, __caller_line, [fn], ['function']) 
 		_steps.push({
 			type: __function,
 			fn: fn,
@@ -282,7 +285,7 @@ module.exports = {
 	},
 
 	wait: (events, timeout) => {
-		_check_step(__function, [events, timeout], ['object', 'number']) 
+		_check_step(__function, __caller_line, [events, timeout], ['object', 'number']) 
 		var events2 = []
 		for(var i=0 ; i<events.length ; i++) {
 			var evt = events[i]
@@ -291,7 +294,8 @@ module.exports = {
 			} else if (typeof evt == 'array' || typeof evt == 'object') {
 				events2.push(matching.partial_match(evt))
 			} else {
-				throw "Invalid event definition " + evt
+				console.error(chalk.red(`wait (line ${__line}): invalid event definition ` + evt))
+				process.exit(1)
 			}
 		}
 
@@ -304,7 +308,7 @@ module.exports = {
 	},
 
 	sleep: (timeout) => {
-		_check_step(__function, [timeout], ['number']) 
+		_check_step(__function, __caller_line, [timeout], ['number']) 
 		_steps.push({
 			type: __function,
 			timeout: timeout,
@@ -313,7 +317,7 @@ module.exports = {
 	},
 
 	add_event_filter: (ef) => {
-		_check_step(__function, [ef], ['object']) 
+		_check_step(__function, __caller_line, [ef], ['object']) 
 
 		var mf
 		if(typeof ef == 'function') {
@@ -334,7 +338,7 @@ module.exports = {
 	},
 
 	remove_event_filter: (ef) => {
-		_check_step(__function, [ef], ['object']) 
+		_check_step(__function, __caller_line, [ef], ['object']) 
 		_steps.push({
 			type: __function,
 			event_filter: ef,

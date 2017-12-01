@@ -154,5 +154,6 @@ To run sample test do:
   cd test/
   node zester.js
 
+For reference, node version used: v7.10.0
 
 
