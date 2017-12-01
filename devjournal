@@ -144,4 +144,10 @@ We must also ensure that any access to non existent keys in our modules throw an
 instead of:
   key: m.absent
 
+================================================
+2017/12/01 takeshi:
+
+To run tests:
+  node_modules/jest/bin/jest.js
+
 

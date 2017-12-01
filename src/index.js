@@ -219,7 +219,9 @@ var _handle_event = evt => {
 
 var _check_step = (type, name, params, spec) => {
 	if(_step_names.has(name)) {
-		throw `Name '${name}' used by more than one step. Please use unique names for steps as this will permit to easily track errors.`
+		if(!['add_event_filter', 'remove_event_filter'].includes(type)) {
+			throw `Name '${name}' used by more than one step. Please use unique names for steps as this will permit to easily track errors.`
+		}
 	}
 
 	if(params.length != spec.length) {

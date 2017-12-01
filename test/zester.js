@@ -2,9 +2,9 @@ var z = require('../src/index.js')
 var m = require('../src/matching')
 const assert = require('assert')
 
-var EE = require('events')
+var events = require('events')
 
-class MyEmitter extends EE {}
+class MyEmitter extends events {}
 
 var em = new MyEmitter()
 
@@ -47,7 +47,7 @@ z.exec('three', () => {
 	}, 6000)
 })
 
-z.exec('three', () => {
+z.exec('four', () => {
 	setTimeout(() => {
 		em.emit("evt3")
 		em.emit("evt4")
@@ -64,11 +64,11 @@ z.wait('evt3', [
 	}	
 ], 2000)
 
-z.sleep(1000)
+z.sleep('five', 1000)
 
 z.remove_event_filter('filter evt4')
 
-z.exec('four', () => {
+z.exec('six', () => {
 	setTimeout(() => {
 		em.emit("evt4")
 	}, 1000)
@@ -115,12 +115,12 @@ z.exec('check name', () => {
 	assert.equal(the_CC, 3)
 })
 
-z.sleep('second', 250)
+z.sleep('seventh', 250)
 
-z.sleep('third', 500)
+z.sleep('eighth', 500)
 
-z.sleep('fourth', 1000)
+z.sleep('ninth', 1000)
 
-z.sleep('fifth', 5000)
+z.sleep('tenth', 5000)
 
 z.run()
