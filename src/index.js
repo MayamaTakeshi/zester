@@ -80,8 +80,8 @@ var _process_event_during_wait = function(evt) {
 					_set_global_vars(_dict)
 					console.log(chalk.green(`wait (line ${_current_step.line}) got expected event:`))
 					console.log(zutil.prettyPrint(evt, 1))
-					console.log(chalk.green("while waiting for:"))
-					console.log(zutil.prettyPrint(_expected_events))
+					//console.log(chalk.green("while waiting for:"))
+					//console.log(zutil.prettyPrint(_expected_events))
 
 					// TODO: need to set variables according to data store.
 					_expected_events.splice(i, 1)
