@@ -14,7 +14,7 @@ var _interval_id;
 
 var _dict = {}
 
-var _timer_id = null
+var _timerId = null
 
 var _event_filters = []
 
@@ -88,7 +88,9 @@ var _process_event_during_wait = function(evt) {
 
 					if(_expected_events.length == 0) {
 						// all events received
-						clearTimeout(_timerId)
+						if(_timerId) {
+							clearTimeout(_timerId)
+						}
 						_current_step = null; // this will signal to function 'run' command to proceed with next step
 					}
 					return
