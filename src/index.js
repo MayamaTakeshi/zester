@@ -183,7 +183,6 @@ var _run = () => {
 	}
 
 	if(!_current_step) {
-		_queued_events = [];
 		_current_step = _steps.shift()
 		console.log(chalk.green(`Starting ${_current_step.type} (line ${_current_step.line})`))
 

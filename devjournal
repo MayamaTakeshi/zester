@@ -150,9 +150,12 @@ instead of:
 To run unit tests:
   node_modules/jest/bin/jest.js
 
-To run sample test do:
-  cd test/
-  node zester_test.js
+To run sample tests:
+  node samples/FILE_NAME
+Ex:
+  node samples/zester_test.js
+  node samples/fs_test.js
+
 
 For reference, node version used: v7.10.0
 
