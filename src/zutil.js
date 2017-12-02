@@ -37,7 +37,11 @@ var _prettyPrintArrayElements = (array, depth) => {
 
 var _prettyPrint = (x, depth=0, same_line) => {
 	var front_indent = same_line ? '' : _i(depth)
-	if(Array.isArray(x)) {
+	if(x === undefined) {
+		return front_indent + 'undefined'
+	} else if(x === null) {
+		return front_indent + 'null'
+	} else if(Array.isArray(x)) {
 		return front_indent + "[\n" + _prettyPrintArrayElements(x, depth+1) + "\n" + _i(depth) + "]"
 	} else if(typeof x == 'object') {
 		if(util.inspect(x).indexOf('[Circular]') >= 0) {

@@ -23,6 +23,10 @@ var _typeof = (v) => {
 	if(t === 'object') {
 		if(v instanceof Array)
 			return 'array'
+		else if(v === undefined)
+			return 'undefined'
+		else if(v === null)
+			return 'null'
 		else
 			return 'dict'
 	} else {
@@ -73,7 +77,21 @@ var _match = (expected, received, dict, full_match) => {
 	var type_e = _typeof(expected)
 	var type_r = _typeof(received)
 
-	if(type_e == undefined) {
+	console.log("---------")
+	console.log("expected:")
+	console.dir(expected)
+	console.log("expected type:")
+	console.log(type_e)
+
+	console.log()
+
+	console.log("received:")
+	console.dir(received)
+	console.log("received type:")
+	console.log(type_r)
+	console.log("---------")
+
+	if(type_e == 'undefined') {
 		// this means to ignore received value
 		return true
 	}

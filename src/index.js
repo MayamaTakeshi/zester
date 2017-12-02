@@ -256,6 +256,7 @@ var _check_step = (type, caller_line, params, spec) => {
 }
 
 module.exports = {
+	// IMPORTANT: do not change this to '() => {...}' as arguments is not available on arrow functions
 	trap_events: function(emitter, name) {
 		var orig_emit = emitter.emit
 		emitter.emit = function() {
@@ -271,12 +272,13 @@ module.exports = {
 		}
 	},
 
+	// IMPORTANT: do not change this to '() => {...}' as arguments is not available on arrow functions
 	callback_trap: function(name) {
 		return function() {
 			var evt = {
 				source: 'callback',
 				name: name,
-				args: arguments,
+				args: Array.from(arguments),
 			}
 			_handle_event(evt)
 		}
