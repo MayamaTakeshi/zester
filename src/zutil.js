@@ -31,7 +31,7 @@ var _prettyPrintDictElements = (dict, depth) => {
 
 var _prettyPrintArrayElements = (array, depth) => {
 	return _.join(_.map(array, (e) => { 
-		return _prettyPrint(e, depth+1)
+		return _prettyPrint(e, depth+1, false)
 	}),',\n')
 }
 
@@ -42,17 +42,17 @@ var _prettyPrint = (x, depth=0, same_line) => {
 	} else if(x === null) {
 		return front_indent + 'null'
 	} else if(Array.isArray(x)) {
-		return front_indent + "[\n" + _prettyPrintArrayElements(x, depth+1) + "\n" + _i(depth) + "]"
+		return front_indent + "[\n" + _prettyPrintArrayElements(x, depth) + "\n" + _i(depth) + "]"
 	} else if(typeof x == 'object') {
 		if(util.inspect(x).indexOf('[Circular]') >= 0) {
 			return '[Object]'
 		}
-		return front_indent + "{\n" + _prettyPrintDictElements(x, depth+1) + "\n" + _i(depth) + "}"
+		return front_indent + "{\n" + _prettyPrintDictElements(x, depth) + "\n" + _i(depth) + "}"
 	} else if(typeof x == 'function' && x.__original_data__) {
 		var isArr = Array.isArray(x.__original_data__) 
 		return front_indent + x.__name__ + 
 			(isArr ? "([\n" : "({\n") + 
-			(isArr ? _prettyPrintArrayElements(x.__original_data__, depth+1) : _prettyPrintDictElements(x.__original_data__, depth+1)) + "\n" +
+			(isArr ? _prettyPrintArrayElements(x.__original_data__, depth) : _prettyPrintDictElements(x.__original_data__, depth)) + "\n" +
 			_i(depth) + (isArr ? "])" : "})")
 	} else {
 		return _i(depth) + util.inspect(x)

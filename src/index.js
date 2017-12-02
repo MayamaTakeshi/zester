@@ -45,9 +45,9 @@ get: function() {
 });
 
 var _match = function(expected, received) {
-	console.log("_match got:")
-	console.dir(expected)
-	console.dir(received)
+	//console.log("_match got:")
+	//console.dir(expected)
+	//console.dir(received)
 	return expected(received, _dict)
 }
 
