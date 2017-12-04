@@ -1,5 +1,5 @@
 var _ = require('lodash')
-var sm = require('./string_matching')
+var sm = require('string-matching')
 var util = require('util')
 
 const re_string_matching_indication = /(^|[^!])!{/

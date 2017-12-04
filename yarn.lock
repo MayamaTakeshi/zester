@@ -1739,6 +1739,12 @@ string-length@^1.0.1:
   dependencies:
     strip-ansi "^3.0.0"
 
+string-matching@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/string-matching/-/string-matching-1.0.0.tgz#c57f4891fac84967c3d56a42dea37fa21c881e2a"
+  dependencies:
+    jest "^19.0.2"
+
 string-width@^1.0.1, string-width@^1.0.2:
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/string-width/-/string-width-1.0.2.tgz#118bdf5b8cdc51a2a7e70d211e07e2b0b9b107d3"
