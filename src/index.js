@@ -1,5 +1,5 @@
 var util = require('util')
-var matching = require('./matching')
+var matching = require('data-matching')
 var zutil = require('./zutil')
 var chalk = require('chalk')
 

@@ -1,5 +1,5 @@
 var z = require('../src/index.js')
-var m = require('../src/matching')
+var m = require('data-matching')
 const assert = require('assert')
 
 fs = require('fs')
