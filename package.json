@@ -25,6 +25,6 @@
   "dependencies": {
     "chalk": "^2.3.0",
     "data-matching": "^1.4.0",
-    "deasync": "^0.1.11"
+    "deasync": "^0.1.12"
   }
 }
