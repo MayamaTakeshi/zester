@@ -148,7 +148,7 @@ var _check_op = (type, caller_line, params, spec) => {
 
 module.exports = {
 	// IMPORTANT: do not change this to '() => {...}' as arguments is not available on arrow functions
-	trap_events: function(emitter, name) {
+	trap_events: function(emitter, name, preprocessor) {
 		var orig_emit = emitter.emit
 		emitter.emit = function() {
 			var args = Array.from(arguments)
@@ -158,18 +158,24 @@ module.exports = {
 				name: event_name,
 				args: args, 
 			}
+			if(preprocessor) {
+				evt = preprocessor(evt)
+			}
 			_handle_event(evt)
 			orig_emit.apply(emitter, arguments)
 		}
 	},
 
 	// IMPORTANT: do not change this to '() => {...}' as arguments is not available on arrow functions
-	callback_trap: function(name) {
+	callback_trap: function(name, preprocessor) {
 		return function() {
 			var evt = {
 				source: 'callback',
 				name: name,
 				args: Array.from(arguments),
+			}
+			if(preprocessor) {
+				evt = preprocessor(evt)
 			}
 			_handle_event(evt)
 		}
