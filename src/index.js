@@ -53,8 +53,9 @@ var _set_global_vars = (dict) => {
 	for(var key in dict) {
 		console.log("trying to set " + key)
 		var val_type = eval('typeof ' + key)
+		var is_null = eval(key + ' == null')
 		var val = dict[key]
-		if(val_type == 'undefined') {
+		if(val_type == 'undefined' || is_null) {
 			console.log(util.inspect(val))
 			eval(key + ' = ' + (typeof val == 'string' ? util.inspect(val) : 'val'))
 		} else {
