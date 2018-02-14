@@ -103,7 +103,7 @@ var _process_event_during_wait = function(evt) {
 		}
 
 		print_red(`wait (line ${_current_op_line}) got unexpected event:`)
-		print_red(zutil.prettyPrint(evt, 1))
+		print_white(zutil.prettyPrint(evt, 1))
 		print_red('while waiting for:')
 		print_white(zutil.prettyPrint(_expected_events))
 		process.exit(1)
