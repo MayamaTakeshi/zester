@@ -43,26 +43,38 @@ get: function() {
 });
 
 var _match = function(expected, received) {
-	//console.log("_match got:")
+	//print_white("_match got:")
 	//console.dir(expected)
 	//console.dir(received)
 	return expected(received, _dict)
 }
 
+var print_white = function(s) {
+	console.log(s)
+}
+
+var print_green = function(s) {
+	console.log(chalk.green(s))
+}
+
+var print_red = function(s) {
+	console.log(chalk.red(s))
+}
+
 var _set_global_vars = (dict) => {
 	for(var key in dict) {
-		console.log("trying to set " + key)
+		print_white("Trying to set " + key)
 		var val_type = eval('typeof ' + key)
 		var is_null = eval(key + ' == null')
 		var val = dict[key]
 		if(val_type == 'undefined' || is_null) {
-			console.log(util.inspect(val))
+			print_white(zutil.prettyPrint(val, 1))
 			eval(key + ' = ' + (typeof val == 'string' ? util.inspect(val) : 'val'))
 		} else {
-			console.log("key to evaluate: ", key)
-			console.log("val : ", val)
+			print_white("key to evaluate: ", key)
+			print_white("val : ", val)
 			if(util.inspect(eval(key)) != util.inspect(val)) {
-				console.error(chalk.red(`Cannot set global var '${key}' to '${val}' as it is already set to '${eval(key)}'`))
+				print_red(`Cannot set global var '${key}' to '${val}' as it is already set to '${eval(key)}'`)
 				process.exit(1)
 			}
 		}
@@ -77,8 +89,8 @@ var _process_event_during_wait = function(evt) {
 			try {
 				if(_match(_expected_events[i], evt)) {
 					_set_global_vars(_dict)
-					console.log(chalk.green(`wait (line ${_current_op_line}) got expected event:`))
-					console.log(zutil.prettyPrint(evt, 1))
+					print_green(`wait (line ${_current_op_line}) got expected event:`)
+					print_white(zutil.prettyPrint(evt, 1))
 
 					_expected_events.splice(i, 1)
 
@@ -86,21 +98,21 @@ var _process_event_during_wait = function(evt) {
 				}
 			} catch(e) {
 				last_error = e
-				console.error(last_error)
+				print_red(last_error)
 			}
 		}
 
-		console.error(chalk.red(`wait (line ${_current_op_line}) got unexpected event:`))
-		console.error(zutil.prettyPrint(evt, 1))
-		console.error(chalk.red('while waiting for:'))
-		console.error(zutil.prettyPrint(_expected_events))
+		print_red(`wait (line ${_current_op_line}) got unexpected event:`)
+		print_red(zutil.prettyPrint(evt, 1))
+		print_red('while waiting for:')
+		print_white(zutil.prettyPrint(_expected_events))
 		process.exit(1)
 	}
 }
 
 var _process_event_during_sleep = function(evt) {
-	console.error(chalk.red(`sleep (line ${_current_op_line}) awakened by unexpected event:`))
-	console.error(zutil.prettyPrint(evt, 1))
+	print_red(`sleep (line ${_current_op_line}) awakened by unexpected event:`)
+	print_white(zutil.prettyPrint(evt, 1))
 	process.exit(1)
 }
 
@@ -119,8 +131,8 @@ var _should_ignore_event = evt => {
 
 var _handle_event = evt => {
 	if(_should_ignore_event(evt)) {
-		console.log("Ignoring event:")
-		console.log(zutil.prettyPrint(evt, 1))
+		print_white("Ignoring event:")
+		print_white(zutil.prettyPrint(evt, 1))
 		return
 	}
 
@@ -135,13 +147,13 @@ var _handle_event = evt => {
 
 var _check_op = (type, caller_line, params, spec) => {
 	if(params.length != spec.length) {
-		console.error(chalk.red(`${type} (line ${caller_line}): invalid number of params. Expected ${spec.length}. Got ${params.length}`))
+		print_red(`${type} (line ${caller_line}): invalid number of params. Expected ${spec.length}. Got ${params.length}`)
 		process.exit(1)
 	}
 
 	for(var i=0 ; i<spec.length ; ++i) {
 		if(typeof params[i] != spec[i]) {
-			console.error(chalk.red(`${type} (line ${caller_line}): invalid type for param ${i+1}. Expected '${spec[i]}'. Got '${typeof params[i]}'`))
+			print_red(`${type} (line ${caller_line}): invalid type for param ${i+1}. Expected '${spec[i]}'. Got '${typeof params[i]}'`)
 			process.exit(1)
 		}
 	}
@@ -196,12 +208,12 @@ module.exports = {
 			} else if (typeof evt == 'array' || typeof evt == 'object') {
 				events2.push(matching.partial_match(evt))
 			} else {
-				console.error(chalk.red(`wait (line ${__line}): invalid event definition ` + evt))
+				print_red(`wait (line ${__line}): invalid event definition ` + evt)
 				process.exit(1)
 			}
 		}
 
-		console.log(chalk.green(`wait(line ${__caller_line}) started`))
+		print_green(`wait(line ${__caller_line}) started`)
 		_current_op_name = 'wait'
 		_current_op_line = __caller_line
 		_dict = {}
@@ -218,9 +230,9 @@ module.exports = {
 
 		while(!timed_out) {	
 			if(_expected_events.length == 0) {
-				console.log("All expected events received")
+				print_white("All expected events received")
 				clearTimeout(timer_id)
-				console.log(chalk.green(`wait(line ${__caller_line}) finished`))
+				print_green(`wait(line ${__caller_line}) finished`)
 				_current_op_name = null
 				return
 			}
@@ -228,15 +240,15 @@ module.exports = {
 			deasync.sleep(100);
 		}
 
-		console.error(chalk.red(`wait timed out while waiting for:`))
-		console.error(zutil.prettyPrint(_expected_events))
+		print_red(`wait timed out while waiting for:`)
+		print_white(zutil.prettyPrint(_expected_events))
 		process.exit(1)
 	},
 
 	sleep: (timeout) => {
 		_check_op('sleep', __caller_line, [timeout], ['number']) 
 
-		console.log(chalk.green(`sleep(line ${__caller_line}) started`))
+		print_green(`sleep(line ${__caller_line}) started`)
 		_current_op_name = 'sleep'
 		_current_op_line = __caller_line
 		if(_queued_events.length > 0) {
@@ -251,7 +263,7 @@ module.exports = {
 		while(!timed_out) {	
 			deasync.sleep(100);
 		}
-		console.log(chalk.green(`sleep(line ${__caller_line}) finished`))
+		print_green(`sleep(line ${__caller_line}) finished`)
 		_current_op_name = null
 	},
 
@@ -262,7 +274,7 @@ module.exports = {
 		} else if (typeof ef == 'array' || typeof ef == 'object') {
 			mf = matching.partial_match(ef)
 		} else {
-			console.error("Invalid event filter definition for " + __function)
+			print_red("Invalid event filter definition for " + __function)
 			console.dir(ef)
 			process.exit(1)
 		}
@@ -279,7 +291,7 @@ module.exports = {
 		})
 
 		if(len == _event_filters.length) {
-			console.error(chalk.red(`remove_event_filter failed: filter not found`))
+			print_red(`remove_event_filter failed: filter not found`)
 			process.exit(1)
 		}
 	},

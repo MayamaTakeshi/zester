@@ -22,11 +22,17 @@ var _isSimpleType = (x) => {
 }
 
 var _prettyPrintDictElements = (dict, depth) => {
-	return _.join(_.map(dict, 
-		(val, key) => { 
+	var keys = Object.keys(dict)
+	var printableKeys = _.filter(keys, (key) => !key.startsWith("_"))
+	var items = _.chain(printableKeys).map((key) => { 
+			var val = dict[key]
 			return _i(depth+1) + key + ": " + (_isSimpleType(val) ? util.inspect(val) : _prettyPrint(val, depth+1, true))  
 		}
-	), ',\n')
+	).value()
+	if(items.length != keys.length) {
+		items.push(_i(depth+1) + "... ABRIDGED ...")
+	}
+	return items.join(",\n")
 }
 
 var _prettyPrintArrayElements = (array, depth) => {
@@ -44,9 +50,11 @@ var _prettyPrint = (x, depth=0, same_line) => {
 	} else if(Array.isArray(x)) {
 		return front_indent + "[\n" + _prettyPrintArrayElements(x, depth) + "\n" + _i(depth) + "]"
 	} else if(typeof x == 'object') {
+		/*
 		if(util.inspect(x).indexOf('[Circular]') >= 0) {
 			return '[Object]'
 		}
+		*/
 		return front_indent + "{\n" + _prettyPrintDictElements(x, depth) + "\n" + _i(depth) + "}"
 	} else if(typeof x == 'function' && x.__original_data__) {
 		var isArr = Array.isArray(x.__original_data__) 
