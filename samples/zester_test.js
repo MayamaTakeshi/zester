@@ -67,6 +67,8 @@ z.wait([
 	}	
 ], 2000)
 
+name = null
+the_CC = null
 z.wait([
 	{
 		source: 'my_emitter',
@@ -106,4 +108,4 @@ z.sleep(500)
 
 z.sleep(1000)
 
-z.sleep(5000)
+console.log("Finished with success")
