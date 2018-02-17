@@ -32,7 +32,9 @@ get: function() {
 
 Object.defineProperty(global, '__caller_line', {
 get: function() {
-        return __stack[2].getLineNumber();
+	var fileName = __stack[2].getFileName()
+        var lineNumber = __stack[2].getLineNumber()
+	return fileName + ":" + lineNumber
     }
 });
 
@@ -213,7 +215,7 @@ module.exports = {
 			}
 		}
 
-		print_green(`wait(line ${__caller_line}) started`)
+		print_green(`wait (line ${__caller_line}) started`)
 		_current_op_name = 'wait'
 		_current_op_line = __caller_line
 		_dict = {}
@@ -232,7 +234,7 @@ module.exports = {
 			if(_expected_events.length == 0) {
 				print_white("All expected events received")
 				clearTimeout(timer_id)
-				print_green(`wait(line ${__caller_line}) finished`)
+				print_green(`wait (line ${__caller_line}) finished`)
 				_current_op_name = null
 				return
 			}
@@ -248,7 +250,7 @@ module.exports = {
 	sleep: (timeout) => {
 		_check_op('sleep', __caller_line, [timeout], ['number']) 
 
-		print_green(`sleep(line ${__caller_line}) started`)
+		print_green(`sleep (line ${__caller_line}) started`)
 		_current_op_name = 'sleep'
 		_current_op_line = __caller_line
 		if(_queued_events.length > 0) {
@@ -263,7 +265,7 @@ module.exports = {
 		while(!timed_out) {	
 			deasync.sleep(100);
 		}
-		print_green(`sleep(line ${__caller_line}) finished`)
+		print_green(`sleep (line ${__caller_line}) finished`)
 		_current_op_name = null
 	},
 
