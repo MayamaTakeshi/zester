@@ -67,8 +67,6 @@ z.wait([
 	}	
 ], 2000)
 
-name = null
-the_CC = null
 z.wait([
 	{
 		source: 'my_emitter',
@@ -97,10 +95,10 @@ z.wait([
 	},
 ], 6000)
 
-console.log("name=" + name)
-assert.equal(name, 'eeee')
-console.log("the_CC=" + the_CC)
-assert.equal(the_CC, 3)
+console.log("name=" + z.store.name)
+assert.equal(z.store.name, 'eeee')
+console.log("the_CC=" + z.store.the_CC)
+assert.equal(z.store.the_CC, 3)
 
 z.sleep(250)
 

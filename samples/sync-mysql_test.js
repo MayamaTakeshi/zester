@@ -14,7 +14,6 @@ setTimeout(() => {
 	em.emit("evt1", 'arg1', 'arg2', 'arg3', 4, true, new Date)
 }, 100)
 
-some_bool = null
 z.wait([
 	{
 		source: 'my_emitter',
@@ -30,7 +29,7 @@ z.wait([
 	}
 ], 500)
 
-console.log(`some_bool: ${some_bool}`)
+console.log(`some_bool: ${z.store.some_bool}`)
 
 
 var MySql = require('sync-mysql')
@@ -64,6 +63,7 @@ z.wait([
 	}
 ], 500)
 
-console.log(`some_bool: ${some_bool}`)
+console.log(`some_bool: ${z.store.some_bool}`)
+console.log(`date: ${z.store.date}`)
 
 
