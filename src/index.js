@@ -11,6 +11,8 @@ var _queued_events = []
 
 var _dict = {}
 
+var _store = {}
+
 var _event_filters = []
 
 var _current_op_name = null
@@ -63,20 +65,16 @@ var print_red = function(s) {
 	console.log(chalk.red(s))
 }
 
-var _set_global_vars = (dict) => {
+var _set_store_vars = (dict) => {
 	for(var key in dict) {
-		print_white("Trying to set " + key)
-		var val_type = eval('typeof ' + key)
-		var is_null = eval(key + ' == null')
 		var val = dict[key]
-		if(val_type == 'undefined' || is_null) {
+		print_white("Trying to set " + key)
+		if(_store[key] == null) {
 			print_white(zutil.prettyPrint(val, 1))
-			eval(key + ' = ' + (typeof val == 'string' ? util.inspect(val) : 'val'))
+			_store[key] = val
 		} else {
-			print_white("key to evaluate: ", key)
-			print_white("val : ", val)
-			if(util.inspect(eval(key)) != util.inspect(val)) {
-				print_red(`Cannot set global var '${key}' to '${val}' as it is already set to '${eval(key)}'`)
+			if(_store[key] != val) {
+				print_red(`Cannot store['${key}'] to '${val}' as it is already set to '${_store[key]}'`)
 				process.exit(1)
 			}
 		}
@@ -90,7 +88,7 @@ var _process_event_during_wait = function(evt) {
 		while(i--) {
 			try {
 				if(_match(_expected_events[i], evt)) {
-					_set_global_vars(_dict)
+					_set_store_vars(_dict)
 					print_green(`wait (line ${_current_op_line}) got expected event:`)
 					print_white(zutil.prettyPrint(evt, 1))
 
@@ -299,5 +297,7 @@ module.exports = {
 	},
 
 	matching: matching,
+
+	store: _store,
 }
 
