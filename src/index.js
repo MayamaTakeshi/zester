@@ -240,6 +240,14 @@ module.exports = {
 			deasync.sleep(100);
 		}
 
+		if(_expected_events.length == 0) {
+			print_white("All expected events received")
+			clearTimeout(timer_id)
+			print_green(`wait (line ${__caller_line}) finished`)
+			_current_op_name = null
+			return
+		}
+
 		print_red(`wait timed out while waiting for:`)
 		print_white(zutil.prettyPrint(_expected_events))
 		process.exit(1)
