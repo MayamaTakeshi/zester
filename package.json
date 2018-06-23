@@ -1,6 +1,6 @@
 {
   "name": "zester",
-  "version": "2.12.0",
+  "version": "2.13.0",
   "description": "Functional testing tool",
   "main": "src/index.js",
   "scripts": {
@@ -24,7 +24,7 @@
   "homepage": "https://github.com/MayamaTakeshi/zester#readme",
   "dependencies": {
     "chalk": "^2.3.0",
-    "data-matching": "^1.9.0",
+    "data-matching": "^1.10.0",
     "deasync": "^0.1.12"
   }
 }
