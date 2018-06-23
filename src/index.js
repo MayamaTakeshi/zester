@@ -146,6 +146,13 @@ var _handle_event = evt => {
 }
 
 var _check_op = (type, caller_line, params, spec) => {
+	if(['wait', 'sleep'].includes(type)) {
+		if(_current_op_name) {
+			print_red(`${type} (line ${caller_line}): cannot start because ${_current_op_name} (line ${_current_op_line}) is in progress`)
+			process.exit(1)
+		}
+	}
+
 	if(params.length != spec.length) {
 		print_red(`${type} (line ${caller_line}): invalid number of params. Expected ${spec.length}. Got ${params.length}`)
 		process.exit(1)
