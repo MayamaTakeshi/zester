@@ -69,7 +69,6 @@ var _prettyPrint = (x, depth=0, same_line, visited) => {
 	} else if(typeof x == 'function' && x.__name__) {
 		return front_indent + x.__name__ + '()'
 	} else {
-		console.dir(util.inspect(x))
 		return _i(depth) + util.inspect(x)
 	}
 }

@@ -12,13 +12,19 @@ var em = new MyEmitter()
 z.trap_events(em, 'my_emitter')
 
 setTimeout(() => {
-	em.emit("evt1", 'arg1')
+	em.emit("evt1", {'sip_uri': 'sip:jlpicard@tng.st.org:5060'})
 	em.emit("evt2", {a: 1, b: "two", c: null, d: 4, e: 'abc', f: 3, g: 8, h: 'boo'})
 }, 100)
 
 z.wait([
 	{
 		name: 'evt1',
+		args: [
+			{
+				'sip_uri': 'sip:!{user_name}@!{host}:!{port:num}',
+			},
+		],
+
 	},
 	{
 		name: 'evt2',
@@ -39,6 +45,10 @@ z.wait([
 		],
 	},
 ], 2000)
+
+assert(z.store.user_name == 'jlpicard')
+assert(z.store.host == 'tng.st.org')
+assert(z.store.port == 5060)
 
 assert(z.store.my_var == 'boo')
 
