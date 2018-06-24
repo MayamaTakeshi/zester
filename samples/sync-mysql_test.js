@@ -66,4 +66,4 @@ z.wait([
 console.log(`some_bool: ${z.store.some_bool}`)
 console.log(`date: ${z.store.date}`)
 
-
+console.log("Success")

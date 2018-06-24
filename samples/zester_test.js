@@ -106,4 +106,4 @@ z.sleep(500)
 
 z.sleep(1000)
 
-console.log("Finished with success")
+console.log("Success")

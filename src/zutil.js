@@ -13,9 +13,9 @@ var _isSimpleType = (x) => {
 	var t = typeof(x)
 	if(t == 'string' || t == 'boolean' || t == 'number' || t == 'undefined' || t == 'null') {
 		return true
-	} else if(t == 'function') {
-		if(x.__original_data__) return false
-		else return true
+//	} else if(t == 'function') {
+//		if(x.__original_data__) return false
+//		else return true
 	} else {
 		return false
 	}
@@ -66,7 +66,10 @@ var _prettyPrint = (x, depth=0, same_line, visited) => {
 			(isArr ? "([\n" : "({\n") + 
 			(isArr ? _prettyPrintArrayElements(x.__original_data__, depth) : _prettyPrintDictElements(x.__original_data__, depth, visited)) + "\n" +
 			_i(depth) + (isArr ? "])" : "})")
+	} else if(typeof x == 'function' && x.__name__) {
+		return front_indent + x.__name__ + '()'
 	} else {
+		console.dir(util.inspect(x))
 		return _i(depth) + util.inspect(x)
 	}
 }

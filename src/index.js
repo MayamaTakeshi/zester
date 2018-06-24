@@ -46,11 +46,11 @@ get: function() {
     }
 });
 
-var _match = function(expected, received) {
+var _match = function(expected, received, idx) {
 	//print_white("_match got:")
 	//console.dir(expected)
 	//console.dir(received)
-	return expected(received, _dict)
+	return expected(received, _dict, true, 'expected_events[' + idx + ']')
 }
 
 var print_white = function(s) {
@@ -82,32 +82,57 @@ var _set_store_vars = (dict) => {
 }
 
 var _process_event_during_wait = function(evt) {
-	var i = _expected_events.length
-	if(i > 0) {
-		var last_error
-		while(i--) {
-			try {
-				if(_match(_expected_events[i], evt)) {
-					_set_store_vars(_dict)
-					print_green(`wait (line ${_current_op_line}) got expected event:`)
-					print_white(zutil.prettyPrint(evt, 1))
+	print_white("")
+	print_white(`wait (line ${_current_op_line}) got event:`)
+	print_white(zutil.prettyPrint(evt, 1))
 
-					_expected_events.splice(i, 1)
+	var temp = _expected_events.slice() // copy array
+	var matching_errors = []
 
-					return
-				}
-			} catch(e) {
-				last_error = e
-				print_red(last_error)
+	for(var i=0 ; i<temp.length ; ++i) {
+		try {
+			print_white("")
+			print_white(`Trying match against expected_events[${i}]:`)
+			print_white(zutil.prettyPrint(temp[i], 1))
+
+			if(_match(temp[i], evt, i)) {
+				print_white(`Match successful`)
+
+				_set_store_vars(_dict)
+				print_white("")
+				print_green(`wait (line ${_current_op_line}) got expected event:`)
+				print_white(zutil.prettyPrint(evt, 1))
+
+				_expected_events.splice(i, 1)
+
+				return
+			}
+		} catch(e) {
+			if(e instanceof matching.MatchingError) {
+				print_white(`No match: ${e.path}: ${e.reason}`)
+				matching_errors[i] = e
+			} else {
+				print_red(e)
+				process.exit(1)
 			}
 		}
-
-		print_red(`wait (line ${_current_op_line}) got unexpected event:`)
-		print_white(zutil.prettyPrint(evt, 1))
-		print_red('while waiting for:')
-		print_white(zutil.prettyPrint(_expected_events))
-		process.exit(1)
 	}
+
+	print_red("")
+	print_red(`wait (line ${_current_op_line}) got unexpected event:`)
+	print_white(zutil.prettyPrint(evt, 1))
+	print_red("")
+	print_red('while waiting for expected_events:')
+	print_white("[")
+	_expected_events.forEach(function(e, idx, arr) {
+		var me = matching_errors[idx];
+		var reason = `${me.path}: ${me.reason}`;
+		reason = reason.replace( /^expected_events\[[0-9]+\]/, '');
+		print_white(zutil.prettyPrint(e, depth=1))
+		print_red("  NO_MATCH_REASON: "  + reason + "\n")
+	})
+	print_white("]")
+	process.exit(1)
 }
 
 var _process_event_during_sleep = function(evt) {
@@ -119,7 +144,7 @@ var _process_event_during_sleep = function(evt) {
 var _should_ignore_event = evt => {
 	for (var i=0 ; i<_event_filters.length ; ++i) {
 		try {
-			if(_match(_event_filters[i][1], evt)) {
+			if(_match(_event_filters[i][1], evt, i)) {
 				return true					
 			}
 		} catch(e) {
@@ -220,11 +245,15 @@ module.exports = {
 			}
 		}
 
-		print_green(`wait (line ${__caller_line}) started`)
+		print_green(`wait (line ${__caller_line}) started. Waiting for expected_events:`)
+
 		_current_op_name = 'wait'
 		_current_op_line = __caller_line
 		_dict = {}
 		_expected_events = events2
+
+		print_white(zutil.prettyPrint(_expected_events))
+
 		while(_queued_events.length > 0) {
 			var evt = _queued_events.shift()
 			_process_event_during_wait(evt)
@@ -255,6 +284,7 @@ module.exports = {
 			return
 		}
 
+		print_white("")
 		print_red(`wait timed out while waiting for:`)
 		print_white(zutil.prettyPrint(_expected_events))
 		process.exit(1)

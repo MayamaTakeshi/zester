@@ -24,7 +24,7 @@
   "homepage": "https://github.com/MayamaTakeshi/zester#readme",
   "dependencies": {
     "chalk": "^2.3.0",
-    "data-matching": "^1.11.0",
-    "deasync": "^0.1.12"
+    "data-matching": "^1.13.0",
+    "deasync": "^0.1.13"
   }
 }
