@@ -163,6 +163,12 @@ var _handle_event = evt => {
 
 	if(_current_op_name == 'wait') {
 		_process_event_during_wait(evt)
+
+		if(_expected_events.length == 0) {
+			print_white("All expected events received")
+			print_green(`wait (line ${__caller_line}) finished`)
+			_current_op_name = null
+		}
 	} else if(_current_op_name == 'sleep') {
 		_process_event_during_sleep(evt)
 	} else {
@@ -257,6 +263,13 @@ module.exports = {
 		while(_queued_events.length > 0) {
 			var evt = _queued_events.shift()
 			_process_event_during_wait(evt)
+		}
+
+		if(_expected_events.length == 0) {
+			print_white("All expected events received")
+			print_green(`wait (line ${__caller_line}) finished`)
+			_current_op_name = null
+			return
 		}
 
 		var timed_out = false;
