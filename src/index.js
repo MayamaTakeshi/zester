@@ -67,6 +67,8 @@ var print_red = function(s) {
 
 var _set_store_vars = (dict) => {
 	for(var key in dict) {
+		if(key == '_') continue
+
 		var val = dict[key]
 		print_white("Trying to set " + key)
 		if(_store[key] == null) {
