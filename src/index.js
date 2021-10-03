@@ -4,6 +4,7 @@ var util = require('util')
 var matching = require('data-matching')
 var zutil = require('./zutil')
 var chalk = require('chalk')
+var m = require('moment')
 
 var deasync = require('deasync')
 
@@ -28,12 +29,6 @@ get: function() {
     }
 });
 
-Object.defineProperty(global, '__function', {
-get: function() {
-        return __stack[1].getFunctionName();
-    }
-});
-
 var _match = function(expected, received, idx) {
 	//print_white("_match got:")
 	//console.dir(expected)
@@ -41,16 +36,18 @@ var _match = function(expected, received, idx) {
 	return expected(received, _dict, true, 'expected_events[' + idx + ']')
 }
 
+function ts() { return m().format("HH:mm:ss.SSS") }
+
 var print_white = function(s) {
-	console.log(s)
+	console.log(`${ts()} ${s}`)
 }
 
 var print_green = function(s) {
-	console.log(chalk.green(s))
+	console.log(chalk.green(`${ts()} ${s}`))
 }
 
 var print_red = function(s) {
-	console.log(chalk.red(s))
+	console.log(chalk.red(`${ts()} ${s}`))
 }
 
 var _set_store_vars = (dict) => {
@@ -322,7 +319,7 @@ module.exports = {
 		} else if (typeof ef == 'array' || typeof ef == 'object') {
 			mf = matching.partial_match(ef)
 		} else {
-			print_red("Invalid event filter definition for " + __function)
+			print_red("Invalid event filter definition for " + __func)
 			console.dir(ef)
 			process.exit(1)
 		}
@@ -330,7 +327,7 @@ module.exports = {
 	},
 
 	remove_event_filter: (ef) => {
-		_check_op(__function, __caller_line, [ef], ['object']) 
+		_check_op(__func, __caller_line, [ef], ['object'])
 
 		var len = _event_filters.length
 
