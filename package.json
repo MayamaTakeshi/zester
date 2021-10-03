@@ -26,7 +26,8 @@
     "chalk": "^4.0.0",
     "data-matching": "^1.23.6",
     "deasync": "^0.1.19",
-    "y18n": "^5.0.8",
-    "set-value": "^4.0.1"
+    "magic-globals": "github:MayamaTakeshi/magic-globals-MODS",
+    "set-value": "^4.0.1",
+    "y18n": "^5.0.8"
   }
 }

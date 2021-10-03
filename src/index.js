@@ -1,3 +1,5 @@
+require('magic-globals')
+
 var util = require('util')
 var matching = require('data-matching')
 var zutil = require('./zutil')
@@ -17,20 +19,6 @@ var _event_filters = []
 
 var _current_op_name = null
 var _current_op_line = null
-
-Object.defineProperty(global, '__stack', {
-get: function() {
-        var orig = Error.prepareStackTrace;
-        Error.prepareStackTrace = function(_, stack) {
-            return stack;
-        };
-        var err = new Error;
-        Error.captureStackTrace(err, arguments.callee);
-        var stack = err.stack;
-        Error.prepareStackTrace = orig;
-        return stack;
-    }
-});
 
 Object.defineProperty(global, '__caller_line', {
 get: function() {
