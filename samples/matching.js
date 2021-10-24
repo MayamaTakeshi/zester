@@ -1,7 +1,6 @@
 var Zester = require('../src/index.js')
 var m = require('data-matching')
 const assert = require('assert')
-const deasync = require('deasync')
 
 var events = require('events')
 
