@@ -1,4 +1,4 @@
-var z = require('../src/index.js')
+var Zester = require('../src/index.js')
 var m = require('data-matching')
 const assert = require('assert')
 const deasync = require('deasync')
@@ -8,6 +8,8 @@ var events = require('events')
 class MyEmitter extends events {}
 
 var em = new MyEmitter()
+
+var z = new Zester()
 
 z.trap_events(em, 'my_emitter')
 

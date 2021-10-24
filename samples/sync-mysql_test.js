@@ -1,8 +1,9 @@
-var z = require('../src/index.js')
+var Zester = require('../src/index.js')
 var m = require('data-matching')
 const assert = require('assert')
-
 var events = require('events')
+
+var z = new Zester()
 
 class MyEmitter extends events {}
 

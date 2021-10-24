@@ -1,8 +1,10 @@
-var z = require('../src/index.js')
+var Zester = require('../src/index.js')
 var m = require('data-matching')
 const assert = require('assert')
 
 fs = require('fs')
+
+const z = new Zester()
 
 for(var i=0; i<10; ++i) {
 	var path = "./" + i + ".txt";
