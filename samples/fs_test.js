@@ -6,21 +6,29 @@ fs = require('fs')
 
 const z = new Zester()
 
-for(var i=0; i<10; ++i) {
-	var path = "./" + i + ".txt";
-	console.log(path)
-	fs.readFile(path, 'utf8', z.callback_trap('cb'));
+async function test() {
+    for(var i=0; i<10; ++i) {
+        var path = "./" + i + ".txt"
+        console.log(path)
+        fs.readFile(path, 'utf8', z.callback_trap('cb'))
 
-	z.wait([
-		{
-			source: 'callback',
-			name: 'cb',
-			args: [
-				undefined,
-				undefined,
-			],
-		}	
-	], 5000)
+        await z.wait([
+            {
+                source: 'callback',
+                name: 'cb',
+                args: [
+                    undefined,
+                    undefined,
+                ],
+            }	
+        ], 5000)
+    }
+
+    console.log("Success")
 }
 
-console.log("Success")
+test()
+.catch(e => {
+    console.error(e)
+    process.exit(1)
+})

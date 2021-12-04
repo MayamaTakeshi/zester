@@ -1,13 +1,12 @@
 var Zester = require('../src/index.js')
 var m = require('data-matching')
 const assert = require('assert')
-const deasync = require('deasync')
 
 var events = require('events')
 
 class MyEmitter extends events {}
 
-var work = (z) => {
+const test = async (z) => {
     var em = new MyEmitter()
 
     z.trap_events(em, 'my_emitter')
@@ -17,7 +16,7 @@ var work = (z) => {
         em.emit("evt2", {a: 1, b: "two", c: null, d: 4, e: 'abc', f: 3, g: 8, h: 'boo'})
     }, 100)
 
-    z.wait([
+    await z.wait([
         {
             name: 'evt1',
             args: [
@@ -53,9 +52,26 @@ var work = (z) => {
 
     assert(z.store.my_var == 'boo')
 
+    await z.sleep(1000)
     console.log("Finished with success")
 }
 
 
-work(new Zester())
-work(new Zester())
+async function work() {
+    await Promise.all([
+        test(new Zester('test1')),
+        test(new Zester('test2')),
+        test(new Zester('test3')),
+        test(new Zester('test4')),
+        test(new Zester('test5')),
+    ])
+}
+
+work()
+.then(() => {
+    console.log("Complete success")
+})
+.catch(e => {
+    console.error(e)
+    process.exit(1)
+})

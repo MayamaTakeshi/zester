@@ -6,33 +6,24 @@ var zutil = require('./zutil')
 var chalk = require('chalk')
 var m = require('moment')
 
-var deasync = require('deasync')
-
 Object.defineProperty(global, '__caller_line', {
 get: function() {
-	var fileName = __stack[2].getFileName()
-        var lineNumber = __stack[2].getLineNumber()
-	return fileName + ":" + lineNumber
+    var filePath = __stack[2].getFileName()
+    var tokens = filePath.split("/")
+    var fileName = tokens[tokens.length - 1]
+    var lineNumber = __stack[2].getLineNumber()
+    return fileName + ":" + lineNumber
     }
 });
 
+// short timestamp to be easy to follow while tests are executed
 function ts() { return m().format("HH:mm:ss.SSS") }
-
-var print_white = function(s) {
-	console.log(`${ts()} ${s}`)
-}
-
-var print_green = function(s) {
-	console.log(chalk.green(`${ts()} ${s}`))
-}
-
-var print_red = function(s) {
-	console.log(chalk.red(`${ts()} ${s}`))
-}
 
 
 class Zester {
-    constructor() {
+    constructor(id) {
+        this.id = id ? id : ''
+
         this.expected_events = []
 
         this.queued_events = []
@@ -45,27 +36,43 @@ class Zester {
 
         this.current_op_name = null
         this.current_op_line = null
+
+        this.resolve = null
+        this.reject = null
+        this.timer_id = null
+    }
+
+    print_white(s) {
+        console.log(`${ts()} ${this.id} ${s}`)
+    }
+
+    print_green(s) {
+        console.log(chalk.green(`${ts()} ${this.id} ${s}`))
+    }
+
+    print_red(s) {
+        console.log(chalk.red(`${ts()} ${this.id} ${s}`))
     }
 
     match(expected, received, idx) {
-        //print_white("match got:")
+        //this.print_white("match got:")
         //console.dir(expected)
         //console.dir(received)
         return expected(received, this.dict, true, 'expected_events[' + idx + ']')
     }
 
-     set_store_vars(dict) {
+    set_store_vars(dict) {
         for(var key in dict) {
             if(key == '_') continue
 
             var val = dict[key]
-            print_white("Trying to set " + key)
+            this.print_white("Trying to set " + key)
             if(this.store[key] == null) {
-                print_white(zutil.prettyPrint(val, 1))
+                this.print_white(zutil.prettyPrint(val, 1))
                 this.store[key] = val
             } else {
                 if(this.store[key] != val) {
-                    print_red(`Cannot store['${key}'] to '${val}' as it is already set to '${this.store[key]}'`)
+                    this.print_red(`Cannot store['${key}'] to '${val}' as it is already set to '${this.store[key]}'`)
                     process.exit(1)
                 }
             }
@@ -73,73 +80,94 @@ class Zester {
     }
 
     process_event_during_wait(evt) {
-        print_white("")
-        print_white(`wait (line ${this.current_op_line}) got event:`)
-        print_white(zutil.prettyPrint(evt, 1))
+        this.print_white("")
+        this.print_white(`wait (${this.current_op_line}) got event:`)
+        this.print_white(zutil.prettyPrint(evt, 1))
 
         var temp = this.expected_events.slice() // copy array
         var matching_errors = []
 
+        var matched = false
+
         for(var i=0 ; i<temp.length ; ++i) {
             try {
-                print_white("")
-                print_white(`Trying match against expected_events[${i}]:`)
-                print_white(zutil.prettyPrint(temp[i], 1))
+                this.print_white("")
+                this.print_white(`Trying match against expected_events[${i}]:`)
+                this.print_white(zutil.prettyPrint(temp[i], 1))
 
                 if(this.match(temp[i], evt, i)) {
-                    print_white(`Match successful`)
+                    this.print_white(`Match successful`)
 
                     this.set_store_vars(this.dict)
-                    print_white("")
-                    print_green(`wait (line ${this.current_op_line}) got expected event:`)
-                    print_white(zutil.prettyPrint(evt, 1))
+                    this.print_white("")
+                    this.print_green(`wait (${this.current_op_line}) got expected event:`)
+                    this.print_white(zutil.prettyPrint(evt, 1))
 
                     this.expected_events.splice(i, 1)
-
-                    return
+                    matched = true
                 }
             } catch(e) {
                 if(e instanceof matching.MatchingError) {
-                    print_white(`No match: ${e.path}: ${e.reason}`)
+                    this.print_white(`No match: ${e.path}: ${e.reason}`)
                     matching_errors[i] = e
                 } else {
-                    print_red(e)
-                    process.exit(1)
+                    this.print_red(e)
+                    clearTimeout(this.timer_id)
+                    this.timer_id = null
+                    this.reject(e)
+                    return
                 }
             }
         }
 
-        print_red("")
-        print_red(`wait (line ${this.current_op_line}) got unexpected event:`)
-        print_white(zutil.prettyPrint(evt, 1))
-        print_red("")
-        print_red('while waiting for expected_events:')
-        print_white("[")
-        this.expected_events.forEach(function(e, idx, arr) {
-            var me = matching_errors[idx];
-            var reason = `${me.path}: ${me.reason}`;
-            reason = reason.replace( /^expected_events\[[0-9]+\]/, '');
-            print_white(zutil.prettyPrint(e))
-            print_red("  NO_MATCH_REASON: "  + reason + "\n")
-        })
-        print_white("]")
-        process.exit(1)
+        if(matched) {
+            if(this.expected_events.length == 0) {
+                this.print_white("All expected events received")
+                this.print_green(`wait (${this.current_op_line}) finished`)
+
+                this.current_op_name = null
+
+                clearTimeout(this.timer_id)
+                this.timer_id = null
+                this.resolve()
+            }
+        } else {
+            this.print_red("")
+            this.print_red(`wait (${this.current_op_line}) got unexpected event:`)
+            this.print_white(zutil.prettyPrint(evt, 1))
+            this.print_red("")
+            this.print_red('while waiting for expected_events:')
+            this.print_white("[")
+            this.expected_events.forEach(function(e, idx, arr) {
+                var me = matching_errors[idx];
+                var reason = `${me.path}: ${me.reason}`;
+                reason = reason.replace( /^expected_events\[[0-9]+\]/, '');
+                this.print_white(zutil.prettyPrint(e))
+                this.print_red("  NO_MATCH_REASON: "  + reason + "\n")
+            })
+            this.print_white("]")
+            clearTimeout(this.timer_id)
+            this.timer_id = null
+            this.reject('got_unexptected_event')
+        }
     }
 
     process_event_during_sleep(evt) {
-        print_red(`sleep (line ${this.current_op_line}) awakened by unexpected event:`)
-        print_white(zutil.prettyPrint(evt, 1))
-        process.exit(1)
+        this.print_red(`sleep (${this.current_op_line}) awakened by unexpected event:`)
+        this.print_white(zutil.prettyPrint(evt, 1))
+        clearTimeout(this.timer_id)
+        this.timer_id = null
+        this.reject('awakened_by_unexpected_event')
     }
 
     should_ignore_event(evt) {
         for (var i=0 ; i<this.event_filters.length ; ++i) {
             try {
                 if(this.match(this.event_filters[i][1], evt, i)) {
-                    return true					
+                    return true                    
                 }
             } catch(e) {
-                //do nothing	
+                //do nothing    
             }
         }
         return false
@@ -147,8 +175,8 @@ class Zester {
 
     handle_event(evt) {
         if(this.should_ignore_event(evt)) {
-            print_white("Ignoring event:")
-            print_white(zutil.prettyPrint(evt, 1))
+            this.print_white("Ignoring event:")
+            this.print_white(zutil.prettyPrint(evt, 1))
             return
         }
 
@@ -156,8 +184,8 @@ class Zester {
             this.process_event_during_wait(evt)
 
             if(this.expected_events.length == 0) {
-                print_white("All expected events received")
-                print_green(`wait (line ${__caller_line}) finished`)
+                this.print_white("All expected events received")
+                this.print_green(`wait (${this.current_op_line}) finished`)
                 this.current_op_name = null
             }
         } else if(this.current_op_name == 'sleep') {
@@ -170,181 +198,169 @@ class Zester {
     check_op(type, caller_line, params, spec) {
         if(['wait', 'sleep'].includes(type)) {
             if(this.current_op_name) {
-                print_red(`${type} (line ${caller_line}): cannot start because ${this.current_op_name} (line ${this.current_op_line}) is in progress`)
+                this.print_red(`${type} (${caller_line}): cannot start because ${this.current_op_name} (${this.current_op_line}) is in progress`)
                 process.exit(1)
             }
         }
 
         if(params.length != spec.length) {
-            print_red(`${type} (line ${caller_line}): invalid number of params. Expected ${spec.length}. Got ${params.length}`)
+            this.print_red(`${type} (${caller_line}): invalid number of params. Expected ${spec.length}. Got ${params.length}`)
             process.exit(1)
         }
 
         for(var i=0 ; i<spec.length ; ++i) {
             if(typeof params[i] != spec[i]) {
-                print_red(`${type} (line ${caller_line}): invalid type for param ${i+1}. Expected '${spec[i]}'. Got '${typeof params[i]}'`)
+                this.print_red(`${type} (${caller_line}): invalid type for param ${i+1}. Expected '${spec[i]}'. Got '${typeof params[i]}'`)
                 process.exit(1)
             }
         }
     }
 
-	// IMPORTANT: do not change this to '() => {...}' as arguments is not available on arrow functions
-	trap_events(emitter, name, preprocessor) {
-		var orig_emit = emitter.emit
+    // IMPORTANT: do not change this to '() => {...}' as arguments is not available on arrow functions
+    trap_events(emitter, name, preprocessor) {
+        var orig_emit = emitter.emit
         var self = this
-		emitter.emit = function() {
-			var args = Array.from(arguments)
-			var event_name = args.shift()
-			var evt = {
-				source: name,
-				name: event_name,
-				args: args, 
-			}
-			if(preprocessor) {
-				evt = preprocessor(evt)
-			}
-			self.handle_event(evt)
-			orig_emit.apply(emitter, arguments)
-		}
-	}
+        emitter.emit = function() {
+            var args = Array.from(arguments)
+            var event_name = args.shift()
+            var evt = {
+                source: name,
+                name: event_name,
+                args: args, 
+            }
+            if(preprocessor) {
+                evt = preprocessor(evt)
+            }
+            self.handle_event(evt)
+            orig_emit.apply(emitter, arguments)
+        }
+    }
 
-	// IMPORTANT: do not change this to '() => {...}' as arguments is not available on arrow functions
-	callback_trap(name, preprocessor) {
+    // IMPORTANT: do not change this to '() => {...}' as arguments is not available on arrow functions
+    callback_trap(name, preprocessor) {
         var self = this
-		return function() {
-			var evt = {
-				source: 'callback',
-				name: name,
-				args: Array.from(arguments),
-			}
-			if(preprocessor) {
-				evt = preprocessor(evt)
-			}
-			self.handle_event(evt)
-		}
-	}
+        return function() {
+            var evt = {
+                source: 'callback',
+                name: name,
+                args: Array.from(arguments),
+            }
+            if(preprocessor) {
+                evt = preprocessor(evt)
+            }
+            self.handle_event(evt)
+        }
+    }
 
-	push_event(evt) {
-		this.handle_event(evt)
-	}
+    push_event(evt) {
+        this.handle_event(evt)
+    }
 
-	wait(events, timeout) {
-		this.check_op('wait', __caller_line, [events, timeout], ['object', 'number']) 
-		var events2 = []
-		for(var i=0 ; i<events.length ; i++) {
-			var evt = events[i]
-			if(typeof evt == 'function') {
-				events2.push(evt)
-			} else if (typeof evt == 'array' || typeof evt == 'object') {
-				events2.push(matching.partial_match(evt))
-			} else {
-				print_red(`wait (line ${__line}): invalid event definition ` + evt)
-				process.exit(1)
-			}
-		}
+    async wait(events, timeout) {
+        this.check_op('wait', __caller_line, [events, timeout], ['object', 'number']) 
+        var events2 = []
+        for(var i=0 ; i<events.length ; i++) {
+            var evt = events[i]
+            if(typeof evt == 'function') {
+                events2.push(evt)
+            } else if (typeof evt == 'array' || typeof evt == 'object') {
+                events2.push(matching.partial_match(evt))
+            } else {
+                this.print_red(`wait (${__line}): invalid event definition ` + evt)
+                process.exit(1)
+            }
+        }
 
-		print_green(`wait (line ${__caller_line}) started. Waiting for expected_events:`)
+        this.print_green(`wait (${__caller_line}) started. Waiting for expected_events:`)
 
-		this.current_op_name = 'wait'
-	    this.current_op_line = __caller_line
-		this.dict = {}
-		this.expected_events = events2
+        this.current_op_name = 'wait'
+        this.current_op_line = __caller_line
+        this.dict = {}
+        this.expected_events = events2
 
-		print_white(zutil.prettyPrint(this.expected_events))
+        this.print_white(zutil.prettyPrint(this.expected_events))
 
-		while(this.queued_events.length > 0) {
-			var evt = this.queued_events.shift()
-			this.process_event_during_wait(evt)
-		}
+        return new Promise((resolve, reject) => {
+            while(this.queued_events.length > 0) {
+                var evt = this.queued_events.shift()
+                this.process_event_during_wait(evt)
+            }
 
-		if(this.expected_events.length == 0) {
-			print_white("All expected events received")
-			print_green(`wait (line ${__caller_line}) finished`)
-			this.current_op_name = null
-			return
-		}
+            if(this.expected_events.length == 0) {
+                this.print_white("All expected events received")
+                this.print_green(`wait (${this.current_op_line}) finished`)
+                this.current_op_name = null
+                resolve()
+            }
 
-		var timed_out = false;
-		var timer_id = setTimeout(() => {
-			timed_out = true;
-		}, timeout);
+            this.resolve = resolve
+            this.reject = reject
 
-		while(!timed_out) {	
-			if(this.expected_events.length == 0) {
-				print_white("All expected events received")
-				clearTimeout(timer_id)
-				print_green(`wait (line ${__caller_line}) finished`)
-				this.current_op_name = null
-				return
-			}
+            this.timer_id = setTimeout(() => {
+                var e = `wait (${this.current_op_line}) timed out`
+                this.print_red(`${e} while waiting for:`)
+                this.print_white(zutil.prettyPrint(this.expected_events))
+                this.timer_id = null
+                this.reject(e)
+            }, timeout)
+        })
+    }
 
-			deasync.sleep(100);
-		}
+    async sleep(timeout) {
+        this.check_op('sleep', __caller_line, [timeout], ['number']) 
 
-		if(this.expected_events.length == 0) {
-			print_white("All expected events received")
-			clearTimeout(timer_id)
-			print_green(`wait (line ${__caller_line}) finished`)
-			this.current_op_name = null
-			return
-		}
+        this.print_green(`sleep (${__caller_line}) started`)
+        this.current_op_name = 'sleep'
+        this.current_op_line = __caller_line
 
-		print_white("")
-		print_red(`wait timed out while waiting for:`)
-		print_white(zutil.prettyPrint(this.expected_events))
-		process.exit(1)
-	}
+        return new Promise((resolve, reject) => {
+            this.resolve = resolve
+            this.reject = reject
 
-	sleep(timeout) {
-		this.check_op('sleep', __caller_line, [timeout], ['number']) 
+            if(this.queued_events.length > 0) {
+                this.process_event_during_sleep(this.queued_events[0]);
+            }
 
-		print_green(`sleep (line ${__caller_line}) started`)
-		this.current_op_name = 'sleep'
-		this.current_op_line = __caller_line
-		if(this.queued_events.length > 0) {
-			this.process_event_during_sleep(this.queued_events[0]);
-		}
+            this.timer_id = setTimeout(() => {
+                this.print_green(`sleep (${this.current_op_line}) finished`)
+                this.current_op_name = null
+                var resolve = this.resolve
+                this.timer_id = null
+                this.resolve = null
+                this.reject = null
+                resolve()
+            }, timeout)
+        })
+    }
 
-		var timed_out = false;
-		var timer_id = setTimeout(() => {
-			timed_out = true;
-		}, timeout);
+    add_event_filter(ef) {
+        var mf
+        if(typeof ef == 'function') {
+            mf = ef
+        } else if (typeof ef == 'array' || typeof ef == 'object') {
+            mf = matching.partial_match(ef)
+        } else {
+            this.print_red("Invalid event filter definition for " + __func)
+            console.dir(ef)
+            process.exit(1)
+        }
+        this.event_filters.push([ef, mf])
+    }
 
-		while(!timed_out) {	
-			deasync.sleep(100);
-		}
-		print_green(`sleep (line ${__caller_line}) finished`)
-		this.current_op_name = null
-	}
+    remove_event_filter(ef) {
+        this.check_op(__func, __caller_line, [ef], ['object'])
 
-	add_event_filter(ef) {
-		var mf
-		if(typeof ef == 'function') {
-			mf = ef
-		} else if (typeof ef == 'array' || typeof ef == 'object') {
-			mf = matching.partial_match(ef)
-		} else {
-			print_red("Invalid event filter definition for " + __func)
-			console.dir(ef)
-			process.exit(1)
-		}
-		this.event_filters.push([ef, mf])
-	}
+        var len = this.event_filters.length
 
-	remove_event_filter(ef) {
-		this.check_op(__func, __caller_line, [ef], ['object'])
+        this.event_filters = this.event_filters.filter(f => {
+            return f[0] != ef;
+        })
 
-		var len = this.event_filters.length
-
-		this.event_filters = this.event_filters.filter(f => {
-			return f[0] != ef;
-		})
-
-		if(len == this.event_filters.length) {
-			print_red(`remove_event_filter failed: filter not found`)
-			process.exit(1)
-		}
-	}
+        if(len == this.event_filters.length) {
+            this.print_red(`remove_event_filter failed: filter not found`)
+            process.exit(1)
+        }
+    }
 }
 
 module.exports = Zester
