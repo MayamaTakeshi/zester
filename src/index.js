@@ -19,10 +19,24 @@ get: function() {
 // short timestamp to be easy to follow while tests are executed
 function ts() { return m().format("HH:mm:ss.SSS") }
 
+function default_log_function(level, msg) {
+    console.log(ts() + " " + msg)
+}
 
 class Zester {
-    constructor(id) {
-        this.id = id ? id : ''
+    constructor(opts) {
+        this.id = ''
+        this.log_function = default_log_function
+
+        if(opts) {
+            if(opts.id) {
+                this.id = opts.id
+            }
+
+            if(opts.log_function) {
+                this.log_function = opts.log_function
+            }
+        }
 
         this.expected_events = []
 
@@ -43,15 +57,15 @@ class Zester {
     }
 
     print_white(s) {
-        console.log(`${ts()} ${this.id} ${s}`)
+        this.log_function('INFO', this.id + " " + s)
     }
 
     print_green(s) {
-        console.log(chalk.green(`${ts()} ${this.id} ${s}`))
+        this.log_function('INFO', chalk.green(this.id + " " + s))
     }
 
     print_red(s) {
-        console.log(chalk.red(`${ts()} ${this.id} ${s}`))
+        this.log_function('ERROR', chalk.red(this.id + " " + s))
     }
 
     match(expected, received, idx) {

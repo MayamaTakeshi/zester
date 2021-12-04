@@ -59,11 +59,11 @@ const test = async (z) => {
 
 async function work() {
     await Promise.all([
-        test(new Zester('test1')),
-        test(new Zester('test2')),
-        test(new Zester('test3')),
-        test(new Zester('test4')),
-        test(new Zester('test5')),
+        test(new Zester({id: 'test1'})),
+        test(new Zester({id: 'test2'})),
+        test(new Zester({id: 'test3'})),
+        test(new Zester({id: 'test4'})),
+        test(new Zester({id: 'test5'})),
     ])
 }
 
