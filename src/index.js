@@ -152,7 +152,7 @@ class Zester {
             this.print_red("")
             this.print_red('while waiting for expected_events:')
             this.print_white("[")
-            this.expected_events.forEach(function(e, idx, arr) {
+            this.expected_events.forEach((e, idx, arr) => {
                 var me = matching_errors[idx];
                 var reason = `${me.path}: ${me.reason}`;
                 reason = reason.replace( /^expected_events\[[0-9]+\]/, '');
